@@ -12,7 +12,11 @@ import logging as _logging
 import os
 
 import structlog
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+
+# Load .env before any os.getenv() calls at module level
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Structured logging setup
