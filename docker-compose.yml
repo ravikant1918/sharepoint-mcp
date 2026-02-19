@@ -1,0 +1,37 @@
+services:
+  sharepoint-mcp:
+    build: .
+    image: sharepoint-mcp:latest
+    container_name: sharepoint-mcp
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Transport
+      TRANSPORT: http
+      HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: "8000"
+
+      # Logging
+      LOG_FORMAT: json
+      LOG_LEVEL: INFO
+
+      # SharePoint credentials — override with your .env file
+      SHP_ID_APP: ${SHP_ID_APP}
+      SHP_ID_APP_SECRET: ${SHP_ID_APP_SECRET}
+      SHP_TENANT_ID: ${SHP_TENANT_ID}
+      SHP_SITE_URL: ${SHP_SITE_URL}
+      SHP_DOC_LIBRARY: ${SHP_DOC_LIBRARY:-Shared Documents/mcp_server}
+
+      # Optional tuning
+      SHP_MAX_DEPTH: ${SHP_MAX_DEPTH:-15}
+      SHP_MAX_FOLDERS_PER_LEVEL: ${SHP_MAX_FOLDERS_PER_LEVEL:-100}
+      SHP_LEVEL_DELAY: ${SHP_LEVEL_DELAY:-0.5}
+    volumes:
+      - ./downloads:/home/mcp/app/downloads
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
