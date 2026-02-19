@@ -27,10 +27,10 @@ to your Microsoft SharePoint — read files, manage folders, and reason over you
 
 | Without sharepoint-mcp | With sharepoint-mcp |
 |---|---|
-| 🤷 Agent guesses or hallucinates | ✅ Agent reads the actual document |
-| 📋 You copy-paste content manually | ✅ Agent fetches files automatically |
-| 🔒 Knowledge locked in SharePoint | ✅ Knowledge flows into your AI workflow |
-| 🐌 Static, one-shot answers | ✅ Agent reasons, rewrites, and saves back |
+| 🤷 Agent guesses or hallucinates | Agent reads the actual document |
+| 📋 You copy-paste content manually | Agent fetches files automatically |
+| 🔒 Knowledge locked in SharePoint | Knowledge flows into your AI workflow |
+| 🐌 Static, one-shot answers | Agent reasons, rewrites, and saves back |
 
 ---
 
@@ -41,19 +41,19 @@ to your Microsoft SharePoint — read files, manage folders, and reason over you
 You: "Summarise the Q3 report in the Finance folder"
 Agent: → Get_Document_Content("Finance", "Q3_Report.pdf")
        → Reads full extracted text
-       → Returns a sharp, accurate summary ✅
+       → Returns a sharp, accurate summary
 ```
 
 ### ✏️ Read → Reason → Write
 ```
 You: "Translate the proposal to French and save it"
-Agent: → Get_Document_Content → translate → Upload_Document ✅
+Agent: → Get_Document_Content → translate → Upload_Document
 ```
 
 ### 🗂️ Navigate Your Library
 ```
 You: "What files are in the Legal/Contracts folder?"
-Agent: → List_SharePoint_Documents("Legal/Contracts") ✅
+Agent: → List_SharePoint_Documents("Legal/Contracts")
 ```
 
 ### 📊 Supported File Formats
@@ -133,7 +133,7 @@ The fastest way to deploy for remote or cloud use:
 ```bash
 cp .env.example .env        # fill in your credentials
 docker compose up -d        # start HTTP server on port 8000
-curl http://localhost:8000/health  # verify ✅
+curl http://localhost:8000/health
 ```
 
 ### Docker Environment Variables
@@ -215,10 +215,10 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `SHP_ID_APP` | ✅ | — | Azure AD app client ID |
-| `SHP_ID_APP_SECRET` | ✅ | — | Azure AD client secret |
-| `SHP_TENANT_ID` | ✅ | — | Microsoft tenant ID |
-| `SHP_SITE_URL` | ✅ | — | SharePoint site URL |
+| `SHP_ID_APP` | required | — | Azure AD app client ID |
+| `SHP_ID_APP_SECRET` | required | — | Azure AD client secret |
+| `SHP_TENANT_ID` | required | — | Microsoft tenant ID |
+| `SHP_SITE_URL` | required | — | SharePoint site URL |
 | `SHP_DOC_LIBRARY` | | `Shared Documents/mcp_server` | Library path |
 | `SHP_MAX_DEPTH` | | `15` | Max tree depth |
 | `SHP_MAX_FOLDERS_PER_LEVEL` | | `100` | Folders per batch |
@@ -238,9 +238,9 @@ git clone https://github.com/ravikant1918/sharepoint-mcp.git
 cd sharepoint-mcp
 pip install -e ".[dev]"
 
-make test      # ✅ run all tests
+make test      # run all tests
 make inspect   # 🔍 launch MCP Inspector
-make check     # 🔒 quick import sanity check
+make check     # quick import sanity check
 make clean     # 🧹 remove caches
 ```
 
@@ -266,7 +266,7 @@ Contributions are welcome! Please read [docs/contributing.md](docs/contributing.
 
 1. 🍴 Fork the repo
 2. 🌿 Create a branch: `git checkout -b feat/my-tool`
-3. ✅ Add tests: `make test`
+3. Add tests: `make test`
 4. 📬 Open a Pull Request
 
 ---
