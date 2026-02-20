@@ -6,6 +6,51 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0-rc] — Unreleased
+
+### Planned
+- `Search_SharePoint` — full-text search using SharePoint KQL
+- `Get_Recent_Files` — list recently modified documents
+- `Find_Files_By_Type` — filter by extension
+- `Create_Sharing_Link` — shareable links with expiry and permission level
+- `Get_File_Permissions` — list access permissions on files/folders
+- `Remove_Sharing` — revoke shared access
+- `List_Items` — read items from SharePoint lists
+- `Create_List_Item` — add new list items
+- `Update_List_Item` — update list item fields
+- `Delete_List_Item` — remove list items
+- `List_Sites` — browse available SharePoint sites
+- `List_Libraries` — list document libraries in a site
+- `Move_Document` — move files between folders
+- `Copy_Document` — copy files to another folder
+- `Rename_Document` — rename files in-place
+- `Get_File_Versions` — view document version history
+- `Restore_Version` — restore a previous file version
+- `/health` endpoint for Docker and load balancer health checks
+
+---
+
+## [1.0.0] — 2026-02-20
+
+### Added
+- README: Table of Contents with anchor navigation
+- README: VS Code Copilot (Agent Mode) integration guide
+- README: Cursor / Continue integration guide
+- README: Limitations section
+- README: Troubleshooting section (auth, connection, debug logging, permissions)
+- README: Podman compatibility note in Docker section
+- Non-root container security feature in Docker
+- Roadmap v1.1.0 with 18 planned features across 6 categories
+
+### Changed
+- Bumped version to `1.0.0` (production-stable)
+- Fixed tool count: "12 Tools" → "13 Tools" in README
+- Fixed Docker healthcheck: replaced non-existent `/health` endpoint with TCP socket check
+- Removed stale `curl /health` reference from Docker quickstart
+- Improved SEO: added "Model Context Protocol" and "VS Code Copilot" keywords
+- Renamed "Claude Desktop Integration" → "Integrations" (covers Claude, VS Code, Cursor)
+- Updated `docker-compose.yml` healthcheck to match Dockerfile fix
+
 ## [0.2.0] — 2026-02-19
 
 ### Added
