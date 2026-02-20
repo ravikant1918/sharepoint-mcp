@@ -57,6 +57,8 @@ _HTTP_HOST  = os.getenv("HTTP_HOST", "0.0.0.0")
 _HTTP_PORT  = int(os.getenv("HTTP_PORT", "8000"))
 _MOUNT_PATH = os.getenv("MCP_MOUNT_PATH", "/mcp")
 
+_VERSION = "1.0.0"
+
 # ---------------------------------------------------------------------------
 # Shared FastMCP instance — host/port configured here for HTTP/SSE transports
 # ---------------------------------------------------------------------------
@@ -69,6 +71,22 @@ mcp = FastMCP(
     host=_HTTP_HOST,
     port=_HTTP_PORT,
 )
+
+
+# ---------------------------------------------------------------------------
+# Health check endpoint — used by Docker, load balancers, and monitoring
+# ---------------------------------------------------------------------------
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request):  # noqa: ARG001
+    """Return server health status as JSON."""
+    from starlette.responses import JSONResponse
+
+    return JSONResponse({
+        "status": "ok",
+        "version": _VERSION,
+        "transport": _TRANSPORT,
+        "tools": 13,
+    })
 
 
 async def main() -> None:
