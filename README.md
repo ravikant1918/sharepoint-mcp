@@ -1,5 +1,7 @@
 <div align="center">
 
+<!-- mcp-name: io.github.ravikant1918/sharepoint-mcp -->
+
 # 🗂️ sharepoint-mcp
 
 ### **The MCP Server that gives your AI agent a brain for Microsoft SharePoint**
