@@ -11,12 +11,33 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://github.com/ravikant1918/sharepoint-mcp#-docker)
 [![MCP](https://img.shields.io/badge/MCP-compatible-blueviolet)](https://modelcontextprotocol.io)
 
-Connect **Claude**, **Cursor**, **Continue**, or any MCP-compatible AI agent  
-to your Microsoft SharePoint — read files, manage folders, and reason over your organisation's knowledge.
+A production-grade **Model Context Protocol (MCP) server** for **Microsoft SharePoint**.  
+Connect **Claude Desktop**, **VS Code Copilot**, **Cursor**, **Continue**, or any MCP-compatible AI agent  
+to your SharePoint — read files, manage folders, and reason over your organisation's knowledge.
 
 [📚 Docs](docs/) · [🗺️ Roadmap](docs/roadmap.md) · [🐛 Bugs](https://github.com/ravikant1918/sharepoint-mcp/issues) · [💡 Features](https://github.com/ravikant1918/sharepoint-mcp/issues/new?template=feature_request.yml)
 
 </div>
+
+---
+
+## 📑 Table of Contents
+
+- [Why sharepoint-mcp?](#-why-sharepoint-mcp)
+- [What Your Agent Can Do](#-what-your-agent-can-do)
+- [Features](#-features)
+- [Quickstart](#-quickstart)
+- [Docker](#-docker)
+- [Transport Modes](#-transport-modes)
+- [Integrations](#-integrations) — Claude Desktop · VS Code Copilot · Cursor
+- [All 13 Tools](#️-all-13-tools)
+- [Configuration Reference](#️-full-configuration-reference)
+- [Limitations](#️-limitations)
+- [Troubleshooting](#-troubleshooting)
+- [Development](#-development)
+- [Documentation](#-documentation)
+- [Contributing](#-contributing)
+- [Security](#-security)
 
 ---
 
@@ -80,6 +101,7 @@ Agent: → List_SharePoint_Documents("Legal/Contracts")
 | 🚀 | **Dual Transport** | `stdio` for desktop · `http` for Docker/remote |
 | 🪵 | **Structured Logging** | JSON in production · coloured console in dev |
 | 🐳 | **Docker-Ready** | Single command: `docker compose up -d` |
+| 🛡️ | **Non-Root Container** | Runs as unprivileged user inside Docker |
 | 🤖 | **CI/CD** | Tested on Python 3.10 · 3.11 · 3.12 · 3.13 |
 
 ---
@@ -133,8 +155,9 @@ The fastest way to deploy for remote or cloud use:
 ```bash
 cp .env.example .env        # fill in your credentials
 docker compose up -d        # start HTTP server on port 8000
-curl http://localhost:8000/health
 ```
+
+> **Using Podman?** Just replace `docker` with `podman` — fully compatible.
 
 ### Docker Environment Variables
 
@@ -152,11 +175,13 @@ curl http://localhost:8000/health
 | Mode | Best For | Set With |
 |---|---|---|
 | `stdio` | Claude Desktop, Cursor, MCP Inspector | `TRANSPORT=stdio` *(default)* |
-| `http` | Docker, remote agents, REST clients | `TRANSPORT=http` |
+| `http` | Docker, remote agents, VS Code Copilot, REST clients | `TRANSPORT=http` |
 
 ---
 
-## 🤖 Claude Desktop Integration
+## 🔗 Integrations
+
+### 🤖 Claude Desktop
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -177,9 +202,49 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
+### 💻 VS Code Copilot (Agent Mode)
+
+1. Start the server via Docker or `TRANSPORT=http sharepoint-mcp`
+2. Create `.vscode/mcp.json` in your workspace:
+
+```json
+{
+  "servers": {
+    "sharepoint": {
+      "url": "http://localhost:8000/mcp/",
+      "type": "http"
+    }
+  }
+}
+```
+
+3. Open Copilot Chat → switch to **Agent mode** → your 13 SharePoint tools are available.
+
+> ⚠️ **Trailing slash matters** — the URL must end with `/mcp/` (not `/mcp`).
+
+### ⌨️ Cursor / Continue
+
+Add to your MCP config (uses stdio transport):
+
+```json
+{
+  "mcpServers": {
+    "sharepoint": {
+      "command": "sharepoint-mcp",
+      "env": {
+        "SHP_ID_APP": "your-app-id",
+        "SHP_ID_APP_SECRET": "your-app-secret",
+        "SHP_SITE_URL": "https://your-tenant.sharepoint.com/sites/your-site",
+        "SHP_TENANT_ID": "your-tenant-id"
+      }
+    }
+  }
+}
+```
+
 ---
 
-## 🛠️ All 12 Tools
+## 🛠️ All 13 Tools
 
 ### 📁 Folder Management
 
@@ -215,10 +280,10 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `SHP_ID_APP` | required | — | Azure AD app client ID |
-| `SHP_ID_APP_SECRET` | required | — | Azure AD client secret |
-| `SHP_TENANT_ID` | required | — | Microsoft tenant ID |
-| `SHP_SITE_URL` | required | — | SharePoint site URL |
+| `SHP_ID_APP` |  | `12345678-1234-1234-1234-123456789012` | Azure AD app client ID |
+| `SHP_ID_APP_SECRET` |  | `your-app-secret` | Azure AD client secret |
+| `SHP_TENANT_ID` |  | `your-tenant-id` | Microsoft tenant ID |
+| `SHP_SITE_URL` |  | `https://your-tenant.sharepoint.com/sites/your-site` | SharePoint site URL |
 | `SHP_DOC_LIBRARY` | | `Shared Documents/mcp_server` | Library path |
 | `SHP_MAX_DEPTH` | | `15` | Max tree depth |
 | `SHP_MAX_FOLDERS_PER_LEVEL` | | `100` | Folders per batch |
@@ -228,6 +293,68 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `HTTP_PORT` | | `8000` | HTTP port |
 | `LOG_LEVEL` | | `INFO` | `DEBUG` `INFO` `WARNING` `ERROR` |
 | `LOG_FORMAT` | | `console` | `console` or `json` |
+
+---
+
+## ⚠️ Limitations
+
+| Limitation | Details |
+|---|---|
+| **Single site** | Connects to one SharePoint site per server instance (multi-site planned for v2.0) |
+| **Sync client** | Uses synchronous SharePoint REST API calls (async client planned for v1.3) |
+| **No search** | Full-text search not yet available (planned for v1.1) |
+| **No sharing** | Cannot create sharing links yet (planned for v1.1) |
+| **Large files** | Very large files may hit memory limits during content extraction |
+| **Rate limits** | SharePoint throttling (429/503) is handled with auto-retry, but sustained bulk operations may be slow |
+
+---
+
+## 🔧 Troubleshooting
+
+### Authentication Errors
+
+**Problem:** `Missing or invalid SharePoint credentials`  
+**Solution:** Verify all 4 required environment variables are set:
+```bash
+echo $SHP_ID_APP $SHP_ID_APP_SECRET $SHP_TENANT_ID $SHP_SITE_URL
+```
+
+### Connection Issues (HTTP Transport)
+
+**Problem:** Agent can't connect to the MCP server  
+**Solution:**
+1. Ensure the server is running: `curl http://localhost:8000/mcp/`
+2. Check the URL ends with `/mcp/` (trailing slash required)
+3. Verify the port is not blocked by a firewall
+
+### Docker Container Unhealthy
+
+**Problem:** `podman ps` / `docker ps` shows `(unhealthy)`  
+**Solution:** Check container logs for errors:
+```bash
+docker logs sharepoint-mcp
+```
+
+### Debug Logging
+
+Enable verbose output by setting `LOG_LEVEL=DEBUG`:
+```bash
+LOG_LEVEL=DEBUG sharepoint-mcp
+```
+
+For Docker, add to your `.env` file or `docker-compose.yml`:
+```env
+LOG_LEVEL=DEBUG
+LOG_FORMAT=console
+```
+
+### Permission Errors
+
+**Problem:** `Access denied` from SharePoint  
+**Solution:**
+1. Verify the Azure AD app has the required API permissions
+2. Ensure admin consent has been granted (if required by your org)
+3. Confirm `SHP_SITE_URL` points to a site your app has access to
 
 ---
 
@@ -266,7 +393,7 @@ Contributions are welcome! Please read [docs/contributing.md](docs/contributing.
 
 1. 🍴 Fork the repo
 2. 🌿 Create a branch: `git checkout -b feat/my-tool`
-3. Add tests: `make test`
+3. ✅ Add tests: `make test`
 4. 📬 Open a Pull Request
 
 ---

@@ -6,23 +6,43 @@ This document outlines planned features and improvements for future versions of 
 
 ---
 
-## v1.1.0 — Search & Discovery
+## v1.1.0 — Search, Sharing, Lists & Site Management
 
-- [ ] **`Search_SharePoint`** tool — full-text search across files and folders using SharePoint KQL
-- [ ] **`Get_Recent_Files`** tool — list recently modified documents across the library
-- [ ] **`Find_Files_By_Type`** tool — filter by extension (`.pdf`, `.docx`, etc.)
+This release closes every feature gap with competing SharePoint MCP servers and adds powerful new capabilities.
+
+### 🔍 Search & Discovery
+- [ ] **`Search_SharePoint`** — full-text search across files and folders using SharePoint KQL
+- [ ] **`Get_Recent_Files`** — list recently modified documents across the library
+- [ ] **`Find_Files_By_Type`** — filter by extension (`.pdf`, `.docx`, etc.)
+
+### 🔗 Permissions & Sharing
+- [ ] **`Create_Sharing_Link`** — generate a shareable link with configurable expiry and permission level (view / edit)
+- [ ] **`Get_File_Permissions`** — list who has access to a file or folder
+- [ ] **`Remove_Sharing`** — revoke access to a shared file
+
+### 📋 SharePoint Lists
+- [ ] **`List_Items`** — read items from any SharePoint list
+- [ ] **`Create_List_Item`** — add a new item to a SharePoint list
+- [ ] **`Update_List_Item`** — update fields on an existing list item
+- [ ] **`Delete_List_Item`** — remove an item from a list
+
+### 🌐 Site & Library Management
+- [ ] **`List_Sites`** — browse available SharePoint sites (with optional search)
+- [ ] **`List_Libraries`** — list all document libraries in a site
+
+### 📄 Document Operations
+- [ ] **`Move_Document`** — move a file between folders
+- [ ] **`Copy_Document`** — copy a file to another folder
+- [ ] **`Rename_Document`** — rename a file in-place
+- [ ] **`Get_File_Versions`** — view version history of a document
+- [ ] **`Restore_Version`** — restore a previous version of a file
+
+### 🏥 Server Health
+- [ ] **`/health` endpoint** — proper health-check route for Docker and load balancers
 
 ---
 
-## v1.2.0 — Permissions & Sharing
-
-- [ ] **`Get_File_Permissions`** tool — list who has access to a file/folder
-- [ ] **`Share_File`** tool — create a shareable link with configurable expiry and permissions
-- [ ] **`Remove_Sharing`** tool — revoke access to a shared file
-
----
-
-## v1.3.0 — MCP Resources Support
+## v1.2.0 — MCP Resources Support
 
 - [ ] Expose SharePoint folders as **MCP Resources** (not just tools)
 - [ ] Allow AI agents to *browse* the document library via resource URIs
@@ -30,7 +50,7 @@ This document outlines planned features and improvements for future versions of 
 
 ---
 
-## v1.4.0 — Async SharePoint Client
+## v1.3.0 — Async SharePoint Client
 
 - [ ] Replace synchronous `office365-rest-python-client` calls with a native async client
 - [ ] Reduce latency on concurrent tool calls from AI agents
