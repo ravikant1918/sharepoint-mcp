@@ -26,10 +26,30 @@ jobs:
 
       - name: Set version from tag
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          RAW_VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=$(echo "$RAW_VERSION" | sed -E 's/-//g')
           jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
           echo "Publishing version $VERSION"
           cat server.json
+
+      - name: Wait for PyPI Release
+        run: |
+          RAW_VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=$(echo "$RAW_VERSION" | sed -E 's/-//g')
+          echo "Waiting for PyPI to register sharepoint-mcp release $VERSION..."
+          
+          # Poll PyPI every 15s for up to 5 minutes
+          for i in {1..20}; do
+            if curl -s -f -I "https://pypi.org/pypi/sharepoint-mcp/$VERSION/json" > /dev/null; then
+              echo "✅ PyPI package version $VERSION is now available!"
+              exit 0
+            fi
+            echo "⏳ PyPI package not found yet. Waiting 15s... ($i/20)"
+            sleep 15
+          done
+          
+          echo "❌ Timeout waiting for PyPI synchronization."
+          exit 1
 
       - name: Publish to MCP Registry
         run: ./mcp-publisher publish
