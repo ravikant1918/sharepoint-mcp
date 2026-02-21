@@ -6,6 +6,19 @@ This document outlines planned features and improvements for future versions of 
 
 ---
 
+## High-Impact Improvements (Recommended Next)
+
+If you want to make this MCP server noticeably better in the next iterations, prioritize these in order:
+
+1. **Search first**: implement `Search_SharePoint` so agents can find relevant files without guessing folder paths.
+2. **Document lifecycle**: add move/copy/rename tools so agents can manage files after generation workflows.
+3. **Share-safe collaboration**: add sharing-link + permission inspection tools to support real team workflows.
+4. **List item CRUD**: unlock non-document SharePoint data (tasks, trackers, inventories) via list tools.
+5. **Performance uplift**: move to an async client for faster concurrent tool calls.
+6. **MCP resources**: expose browsable resources for better discovery UX in MCP-native clients.
+
+---
+
 ## v1.1.0 — Search, Sharing, Lists & Site Management
 
 This release closes every feature gap with competing SharePoint MCP servers and adds powerful new capabilities.

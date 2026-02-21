@@ -1,6 +1,6 @@
 # Tools Reference
 
-Complete reference for all **12 MCP tools** provided by this server.
+Complete reference for all **13 MCP tools** provided by this server.
 
 ---
 
@@ -171,3 +171,14 @@ Update one or more list-item metadata fields.
 | `metadata` | object | **Yes** | Key-value pairs to set (booleans and lists supported) |
 
 **Returns:** `{ success, message }`
+
+
+---
+
+## 🩺 Operational Endpoint (HTTP/SSE)
+
+While not an MCP tool, the server also exposes a health endpoint for runtime checks:
+
+- `GET /health` → `{ status, version, transport, tools }`
+
+This is useful for Docker health checks, load balancers, and uptime monitoring.
