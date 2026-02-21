@@ -29,7 +29,7 @@ class TestListFolders:
 
         ctx = MagicMock()
         folder_mock = MagicMock()
-        folder_mock.folders = []
+        folder_mock.folders.top = MagicMock(return_value=[])
         ctx.web.get_folder_by_server_relative_url.return_value = folder_mock
 
         settings_mock = MagicMock()
@@ -56,7 +56,7 @@ class TestListFolders:
         sub = _make_folder("reports", "/sites/test/Shared Documents/mcp_server/reports")
         ctx = MagicMock()
         folder_mock = MagicMock()
-        folder_mock.folders = [sub]
+        folder_mock.folders.top = MagicMock(return_value=[sub])
         ctx.web.get_folder_by_server_relative_url.return_value = folder_mock
 
         settings_mock = MagicMock()
