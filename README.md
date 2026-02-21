@@ -156,30 +156,131 @@ sharepoint-mcp
 
 ## 🐳 Docker
 
-The fastest way to deploy for remote or cloud use:
+The fastest way to deploy for remote or cloud use.
 
-### Pull from DockerHub (Recommended)
+### 📋 Usage Scenarios
 
-```bash
-cp .env.example .env        # fill in your credentials
-docker compose up -d        # pulls and starts HTTP server on port 8000
-```
+#### Scenario A: Pull Latest Version from DockerHub (Recommended)
 
-### Build Locally
+Use this for production deployments with the latest stable release:
 
 ```bash
+# Step 1: Clone repository
+git clone https://github.com/ravikant1918/sharepoint-mcp.git
+cd sharepoint-mcp
+
+# Step 2: Create .env file with your SharePoint credentials
 cp .env.example .env
-docker compose up -d --build  # builds from source and starts
+# Edit .env and fill in:
+# SHP_ID_APP=your-app-id
+# SHP_ID_APP_SECRET=your-secret
+# SHP_TENANT_ID=your-tenant-id
+# SHP_SITE_URL=https://yourcompany.sharepoint.com/sites/yoursite
+
+# Step 3: Start container (pulls from DockerHub automatically)
+docker compose up -d
+
+# Step 4: Verify it's running
+docker compose ps
+curl http://localhost:8000/health
+
+# View logs
+docker compose logs -f
+
+# Stop container
+docker compose down
 ```
 
-### Custom Image/Version
+**What happens:** Pulls `ravikant1918/sharepoint-mcp:latest` from DockerHub with automatic architecture detection (Intel/ARM).
+
+---
+
+#### Scenario B: Use Specific Version
+
+Lock to a specific version for stability or testing:
 
 ```bash
-# Use a specific version
-SHAREPOINT_MCP_VERSION=v1.0.0 docker compose up -d
+# Step 1: Set version via environment variable
+SHAREPOINT_MCP_VERSION=v1.0.1 docker compose up -d
 
-# Use your own image
-SHAREPOINT_MCP_IMAGE=myrepo/sharepoint-mcp docker compose up -d
+# Or add to .env file
+echo "SHAREPOINT_MCP_VERSION=v1.0.1" >> .env
+docker compose up -d
+```
+
+**What happens:** Pulls `ravikant1918/sharepoint-mcp:v1.0.1` instead of `latest`.
+
+---
+
+#### Scenario C: Build Locally from Source
+
+Use this for development or when you've made local code changes:
+
+```bash
+# Step 1: Clone and setup
+git clone https://github.com/ravikant1918/sharepoint-mcp.git
+cd sharepoint-mcp
+cp .env.example .env
+# Edit .env with your credentials
+
+# Step 2: Build from local Dockerfile and start
+docker compose up -d --build
+
+# Step 3: Rebuild after code changes
+docker compose down
+docker compose up -d --build
+```
+
+**What happens:** Builds image from local `Dockerfile`, tags as `ravikant1918/sharepoint-mcp:latest`, and starts container.
+
+---
+
+#### Scenario D: Use Custom Image/Fork
+
+If you've forked the repo and published to your own DockerHub:
+
+```bash
+# Use your custom image
+SHAREPOINT_MCP_IMAGE=myusername/sharepoint-mcp \
+SHAREPOINT_MCP_VERSION=dev \
+docker compose up -d
+
+# Or add to .env
+echo "SHAREPOINT_MCP_IMAGE=myusername/sharepoint-mcp" >> .env
+echo "SHAREPOINT_MCP_VERSION=dev" >> .env
+docker compose up -d
+```
+
+**What happens:** Pulls from your custom registry/repository.
+
+---
+
+### 🔧 Common Commands
+
+```bash
+# Start in detached mode
+docker compose up -d
+
+# Start with live logs
+docker compose up
+
+# View logs
+docker compose logs -f
+
+# Stop container
+docker compose down
+
+# Restart container
+docker compose restart
+
+# Pull latest image
+docker compose pull
+
+# Rebuild and restart
+docker compose up -d --build
+
+# Remove everything (including volumes)
+docker compose down -v
 ```
 
 > **Using Podman?** Just replace `docker` with `podman` — fully compatible.
