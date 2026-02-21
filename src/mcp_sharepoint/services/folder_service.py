@@ -2,25 +2,31 @@
 from __future__ import annotations
 
 import logging
+import posixpath
 import time
 from typing import Any
 
 from ..config import get_settings
 from ..core import get_sp_context
+from ..utils.retry import sp_retry
 
 logger = logging.getLogger(__name__)
 
 
 def _sp_path(sub_path: str | None = None) -> str:
     library = get_settings().shp_doc_library
-    return f"{library}/{sub_path or ''}".rstrip("/")
+    clean_path = posixpath.normpath(f"/{sub_path}").lstrip("/") if sub_path else ""
+    if clean_path.startswith(".."):
+        raise ValueError(f"Invalid path traversal attempt: {sub_path}")
+    return f"{library}/{clean_path}".rstrip("/")
 
 
+@sp_retry
 def _load_items(path: str, item_type: str) -> list[dict[str, Any]]:
     """Generic loader for folders or files from a SharePoint path."""
     ctx = get_sp_context()
     folder = ctx.web.get_folder_by_server_relative_url(path)
-    items = getattr(folder, item_type)
+    items = getattr(folder, item_type).top(500)
     props = ["ServerRelativeUrl", "Name", "TimeCreated", "TimeLastModified"] + (
         ["Length"] if item_type == "files" else []
     )
@@ -59,6 +65,7 @@ def list_folders(parent_folder: str | None = None) -> list[dict[str, Any]]:
     return _load_items(_sp_path(parent_folder), "folders")
 
 
+@sp_retry
 def create_folder(folder_name: str, parent_folder: str | None = None) -> dict[str, Any]:
     """Create *folder_name* inside *parent_folder* (or library root)."""
     ctx = get_sp_context()
@@ -79,6 +86,7 @@ def create_folder(folder_name: str, parent_folder: str | None = None) -> dict[st
     }
 
 
+@sp_retry
 def delete_folder(folder_path: str) -> dict[str, Any]:
     """Delete the empty folder at *folder_path*."""
     ctx = get_sp_context()
@@ -103,6 +111,7 @@ def delete_folder(folder_path: str) -> dict[str, Any]:
     return {"success": True, "message": f"Folder '{folder_path}' deleted successfully"}
 
 
+@sp_retry
 def get_folder_tree(parent_folder: str | None = None) -> dict[str, Any]:
     """Return a recursive tree of folders and files starting at *parent_folder*."""
     cfg = get_settings()

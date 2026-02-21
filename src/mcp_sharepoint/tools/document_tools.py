@@ -1,6 +1,8 @@
 """MCP tool registrations for document operations."""
 from __future__ import annotations
 
+import asyncio
+
 from ..server import mcp
 from ..services.document_service import (
     delete_document as _delete_document,
@@ -30,7 +32,7 @@ from ..services.document_service import (
     description="List all documents (with metadata) inside a specified SharePoint folder.",
 )
 async def list_documents_tool(folder_name: str):
-    return _list_documents(folder_name)
+    return await asyncio.to_thread(_list_documents, folder_name)
 
 
 @mcp.tool(
@@ -41,7 +43,7 @@ async def list_documents_tool(folder_name: str):
     ),
 )
 async def get_document_content_tool(folder_name: str, file_name: str):
-    return _get_document_content(folder_name, file_name)
+    return await asyncio.to_thread(_get_document_content, folder_name, file_name)
 
 
 @mcp.tool(
@@ -57,7 +59,7 @@ async def upload_document_tool(
     content: str,
     is_base64: bool = False,
 ):
-    return _upload_document(folder_name, file_name, content, is_base64)
+    return await asyncio.to_thread(_upload_document, folder_name, file_name, content, is_base64)
 
 
 @mcp.tool(
@@ -69,7 +71,7 @@ async def upload_from_path_tool(
     file_path: str,
     new_file_name: str | None = None,
 ):
-    return _upload_from_path(folder_name, file_path, new_file_name)
+    return await asyncio.to_thread(_upload_from_path, folder_name, file_path, new_file_name)
 
 
 @mcp.tool(
@@ -82,7 +84,7 @@ async def update_document_tool(
     content: str,
     is_base64: bool = False,
 ):
-    return _update_document(folder_name, file_name, content, is_base64)
+    return await asyncio.to_thread(_update_document, folder_name, file_name, content, is_base64)
 
 
 @mcp.tool(
@@ -90,7 +92,7 @@ async def update_document_tool(
     description="Permanently delete a document from a SharePoint folder.",
 )
 async def delete_document_tool(folder_name: str, file_name: str):
-    return _delete_document(folder_name, file_name)
+    return await asyncio.to_thread(_delete_document, folder_name, file_name)
 
 
 @mcp.tool(
@@ -101,4 +103,4 @@ async def delete_document_tool(folder_name: str, file_name: str):
     ),
 )
 async def download_document_tool(folder_name: str, file_name: str, local_path: str):
-    return _download_document(folder_name, file_name, local_path)
+    return await asyncio.to_thread(_download_document, folder_name, file_name, local_path)

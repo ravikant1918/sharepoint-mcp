@@ -5,13 +5,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import mcp_sharepoint.config.settings
+import mcp_sharepoint.core.client
+
 
 @pytest.fixture
 def mock_settings(monkeypatch):
     """Provide a dummy Settings object so tests never need real credentials."""
-    from mcp_sharepoint.config.settings import Settings
-
-    dummy = MagicMock(spec=Settings)
+    dummy = MagicMock(spec=mcp_sharepoint.config.settings.Settings)
     dummy.shp_doc_library = "Shared Documents/mcp_server"
     dummy.shp_max_depth = 3
     dummy.shp_max_folders_per_level = 10

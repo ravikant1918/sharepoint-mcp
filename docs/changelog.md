@@ -30,6 +30,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.1] — 2026-02-21
+
+### Fixed
+- **Security:** Resolved critical path traversal vulnerability in SharePoint directory handling.
+- **Performance:** Fixed asyncio event loop blocking by wrapping remote operations in `asyncio.to_thread`.
+- **Performance:** Added `.top(500)` pagination limiting to prevent SharePoint list view threshold crashes.
+- **Resiliency:** Applied `@sp_retry` decorator to handle Graph API rate limits (HTTP 429) across all services.
+- **CI/CD:** Enforced lowercase Docker image names in GitHub Actions publish workflow.
+- **Robustness:** Switched file download fallback from local directory to secure system temporary directory.
+
+---
+
 ## [1.0.0] — 2026-02-20
 
 ### Added
