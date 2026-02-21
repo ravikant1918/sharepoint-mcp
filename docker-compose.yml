@@ -1,6 +1,6 @@
 services:
   sharepoint-mcp:
-    image: ${SHAREPOINT_MCP_IMAGE:-hub.docker.com/iitdeveloperadmin//sharepoint-mcp}:${SHAREPOINT_MCP_VERSION:-latest}
+    image: ${SHAREPOINT_MCP_IMAGE:-iitdeveloperadmin/sharepoint-mcp}:${SHAREPOINT_MCP_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile
