@@ -57,7 +57,12 @@ _HTTP_HOST  = os.getenv("HTTP_HOST", "0.0.0.0")
 _HTTP_PORT  = int(os.getenv("HTTP_PORT", "8000"))
 _MOUNT_PATH = os.getenv("MCP_MOUNT_PATH", "/mcp")
 
-_VERSION = "1.0.0"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    _VERSION = version("sharepoint-mcp")
+except PackageNotFoundError:
+    _VERSION = "0.0.0-dev"
 
 # ---------------------------------------------------------------------------
 # Shared FastMCP instance — host/port configured here for HTTP/SSE transports
@@ -91,7 +96,7 @@ async def health_check(request):  # noqa: ARG001
 
 async def main() -> None:
     """Validate config, register all tools, then run the MCP server."""
-    logger.info("sharepoint-mcp starting", version="1.0.0", transport=_TRANSPORT)
+    logger.info("sharepoint-mcp starting", version="1.0.1", transport=_TRANSPORT)
 
     # Eagerly validate config — fail fast before any tool is called
     from .config import get_settings  # noqa: PLC0415

@@ -27,3 +27,5 @@ htmlcov/
 
 # OS
 .DS_Store
+# setuptools-scm
+src/mcp_sharepoint/_version.py
