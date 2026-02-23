@@ -32,7 +32,7 @@ to your SharePoint — read files, manage folders, and reason over your organisa
 - [Docker](#-docker)
 - [Transport Modes](#-transport-modes)
 - [Integrations](#-integrations) — Claude Desktop · VS Code Copilot · Cursor
-- [All 13 Tools](#️-all-13-tools)
+- [All 14 Tools](#️-all-14-tools)
 - [Configuration Reference](#️-full-configuration-reference)
 - [Limitations](#️-limitations)
 - [Troubleshooting](#-troubleshooting)
@@ -99,9 +99,10 @@ Agent: → List_SharePoint_Documents("Legal/Contracts")
 |     | Feature                 | Description                                          |
 | --- | ----------------------- | ---------------------------------------------------- |
 | 📁  | **Folder Management**   | List, create, delete, get full recursive tree        |
-| 📄  | **Document Management** | Upload, download, update, delete, read content       |
+| 📄  | **Document Management** | Upload, download, update, delete, search, read content|
 | 🏷️  | **Metadata Management** | Read and update SharePoint list-item fields          |
 | 🔍  | **Smart Parsing**       | Auto-detects PDF / Word / Excel / text               |
+| 🔎  | **KQL Search**          | Native SharePoint KQL search for semantic file finding|
 | 🔁  | **Auto-Retry**          | Exponential backoff on SharePoint 429/503 throttling |
 | 🚀  | **Dual Transport**      | `stdio` for desktop · `http` for Docker/remote       |
 | 🪵  | **Structured Logging**  | JSON in production · coloured console in dev         |
@@ -370,7 +371,7 @@ Add to your MCP config (uses stdio transport):
 
 ---
 
-## 🛠️ All 13 Tools
+## 🛠️ All 14 Tools
 
 ### 📁 Folder Management
 
@@ -386,6 +387,7 @@ Add to your MCP config (uses stdio transport):
 | Tool                        | What It Does                                       |
 | --------------------------- | -------------------------------------------------- |
 | `List_SharePoint_Documents` | 📋 List all files with metadata                    |
+| `Search_SharePoint`         | 🔎 Search documents using KQL queries              |
 | `Get_Document_Content`      | 📖 Read & parse file content (PDF/Word/Excel/text) |
 | `Upload_Document`           | ⬆️ Upload file as string or Base64                 |
 | `Upload_Document_From_Path` | 📂 Upload a local file directly                    |
@@ -428,7 +430,6 @@ Add to your MCP config (uses stdio transport):
 | --------------- | ----------------------------------------------------------------------------------------------------- |
 | **Single site** | Connects to one SharePoint site per server instance (multi-site planned for v2.0)                     |
 | **Sync client** | Uses synchronous SharePoint REST API calls (async client planned for v1.3)                            |
-| **No search**   | Full-text search not yet available (planned for v1.1)                                                 |
 | **No sharing**  | Cannot create sharing links yet (planned for v1.1)                                                    |
 | **Large files** | Very large files may hit memory limits during content extraction                                      |
 | **Rate limits** | SharePoint throttling (429/503) is handled with auto-retry, but sustained bulk operations may be slow |

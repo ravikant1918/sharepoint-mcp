@@ -17,6 +17,9 @@ from ..services.document_service import (
     list_documents as _list_documents,
 )
 from ..services.document_service import (
+    search_documents as _search_documents,
+)
+from ..services.document_service import (
     update_document as _update_document,
 )
 from ..services.document_service import (
@@ -33,6 +36,18 @@ from ..services.document_service import (
 )
 async def list_documents_tool(folder_name: str):
     return await asyncio.to_thread(_list_documents, folder_name)
+
+
+@mcp.tool(
+    name="Search_SharePoint",
+    description=(
+        "Search SharePoint for documents using Keyword Query Language (KQL). "
+        "Useful for finding files when you don't know their exact folder path. "
+        "Returns up to row_limit results with metadata."
+    ),
+)
+async def search_documents_tool(query: str, row_limit: int = 20):
+    return await asyncio.to_thread(_search_documents, query, row_limit)
 
 
 @mcp.tool(
