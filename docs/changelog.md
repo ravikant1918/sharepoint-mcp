@@ -12,6 +12,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `Search_SharePoint` — full-text search using SharePoint KQL
 
+### Fixed
+
+- **Security:** Added Local File Inclusion (LFI) protection to `Upload_Document_From_Path` to restrict AI agents from reading sensitive local paths.
+- **Robustness:** Applied explicit return type hints (`-> dict[str, Any]` and `-> list[dict[str, Any]]`) to all 8 MCP document tools to strengthen static analysis and protocol reliability.
+- **Documentation:** Added comprehensive PEP-257 docstrings to all tool entry points for better intellisenense and internal maintainability.
+
 ### Planned
 
 - `Get_Recent_Files` — list recently modified documents
