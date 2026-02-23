@@ -8,9 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.1.0-rc] — Unreleased
 
-### Planned
+### Added
 
 - `Search_SharePoint` — full-text search using SharePoint KQL
+
+### Planned
+
 - `Get_Recent_Files` — list recently modified documents
 - `Find_Files_By_Type` — filter by extension
 - `Create_Sharing_Link` — shareable links with expiry and permission level
