@@ -58,6 +58,38 @@ def list_documents(folder_name: str) -> list[dict[str, Any]]:
 
 
 @sp_retry
+def search_documents(query_text: str, row_limit: int = 20) -> list[dict[str, Any]]:
+    """Search SharePoint documents using KQL *query_text*."""
+    from office365.sharepoint.search.query.request import SearchRequest
+    logger.info("Searching SharePoint documents with query '%s'", query_text)
+    ctx = get_sp_context()
+    
+    # We scope the search to the site or specific document library using path exclusion/inclusion if needed
+    # For a general search within the site:
+    request = SearchRequest(
+        query_text=query_text,
+        row_limit=row_limit,
+        select_properties=["Title", "Path", "FileExtension", "ServerRelativeUrl", "HitHighlightedSummary", "Author"]
+    )
+    result = ctx.search.post_query(request)
+    ctx.execute_query()
+
+    results_list = []
+    if result.value and result.value.RelevantResults and result.value.RelevantResults.get("Table", {}).get("Rows"):
+        rows = result.value.RelevantResults["Table"]["Rows"]
+        for row in rows:
+            record = {}
+            for cell in row.get("Cells", []):
+                key = cell.get("Key")
+                val = cell.get("Value")
+                if key:
+                    record[key] = val
+            results_list.append(record)
+
+    return results_list
+
+
+@sp_retry
 def get_document_content(
     folder_name: str, file_name: str,
 ) -> dict[str, Any]:

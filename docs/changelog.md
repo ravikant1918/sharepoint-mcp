@@ -8,9 +8,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.1.0-rc] — Unreleased
 
-### Planned
+### Added
 
 - `Search_SharePoint` — full-text search using SharePoint KQL
+
+### Changed
+
+- **Robustness:** Enhanced the `/health` endpoint to perform a live `execute_query` check against SharePoint. Now returns HTTP 503 instead of false-positive 200s if the SP connection is failing.
+
+### Fixed
+
+- **Security:** Added Local File Inclusion (LFI) protection to `Upload_Document_From_Path` to restrict AI agents from reading sensitive local paths.
+- **Robustness:** Applied explicit return type hints (`-> dict[str, Any]` and `-> list[dict[str, Any]]`) to all 8 MCP document tools to strengthen static analysis and protocol reliability.
+- **Documentation:** Added comprehensive PEP-257 docstrings to all tool entry points for better intellisenense and internal maintainability.
+
+### Planned
+
 - `Get_Recent_Files` — list recently modified documents
 - `Find_Files_By_Type` — filter by extension
 - `Create_Sharing_Link` — shareable links with expiry and permission level

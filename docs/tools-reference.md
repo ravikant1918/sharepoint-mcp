@@ -66,6 +66,18 @@ List all files in a folder with metadata.
 
 ---
 
+### `Search_SharePoint`
+Search SharePoint for documents using Keyword Query Language (KQL).
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `query` | string | **Yes** | KQL search query (e.g. "filename:report OR content:budget") |
+| `row_limit` | integer | No | Maximum number of results to return (default: 20) |
+
+**Returns:** Array of results with metadata like Title, Path, FileExtension, ServerRelativeUrl, HitHighlightedSummary, and Author.
+
+---
+
 ### `Get_Document_Content`
 Retrieve and decode file content. Automatically parses PDF, Word, Excel, and text files.
 

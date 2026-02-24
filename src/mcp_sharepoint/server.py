@@ -83,15 +83,40 @@ mcp = FastMCP(
 # ---------------------------------------------------------------------------
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request):  # noqa: ARG001
-    """Return server health status as JSON."""
+    """Return server health status as JSON, including live SharePoint access validation."""
     from starlette.responses import JSONResponse
+    
+    sp_status = "unknown"
+    sp_error = None
+    
+    try:
+        def _verify_sp() -> None:
+            from .core import get_sp_context
+            ctx = get_sp_context()
+            ctx.load(ctx.web)
+            ctx.execute_query()
+            
+        await asyncio.to_thread(_verify_sp)
+        sp_status = "connected"
+    except Exception as exc:
+        sp_status = "disconnected"
+        sp_error = str(exc)
+        logger.error("Health check SharePoint connection failed", exc_info=True)
 
-    return JSONResponse({
-        "status": "ok",
+    payload = {
+        "status": "ok" if sp_status == "connected" else "degraded",
         "version": _VERSION,
         "transport": _TRANSPORT,
-        "tools": 13,
-    })
+        "tools": 14,
+        "sharepoint": sp_status,
+    }
+    if sp_error:
+        payload["sharepoint_error"] = sp_error
+
+    return JSONResponse(
+        payload, 
+        status_code=200 if sp_status == "connected" else 503
+    )
 
 
 async def main() -> None:
