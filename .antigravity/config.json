@@ -1,0 +1,16 @@
+{
+    "skills": {
+        "code-reviewer": {
+            "systemPromptFile": ".agents/skills/code-reviewer/SKILL.md",
+            "description": "Enterprise-grade production code review"
+        },
+        "developer-production": {
+            "systemPromptFile": ".agents/skills/developer-production/SKILL.md",
+            "description": "Production-ready code with tests and changelog"
+        },
+        "developer-elite": {
+            "systemPromptFile": ".agents/skills/developer-elite/SKILL.md",
+            "description": "Elite-level production code with architecture, tests, and changelog"
+        }
+    }
+}
