@@ -100,7 +100,7 @@ async def health_check(request):  # noqa: ARG001
     except Exception as exc:
         sp_status = "disconnected"
         sp_error = str(exc)
-        logger.error("Health check SharePoint connection failed", exc_info=True)
+        logger.error("SharePoint connection failed during health check", error=sp_error)
 
     payload = {
         "status": "ok" if sp_status == "connected" else "degraded",
