@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging as _logging
 import os
+from importlib.metadata import PackageNotFoundError, version
 
 import structlog
 from dotenv import load_dotenv
@@ -56,8 +57,6 @@ _TRANSPORT  = os.getenv("TRANSPORT", "stdio").lower()
 _HTTP_HOST  = os.getenv("HTTP_HOST", "0.0.0.0")
 _HTTP_PORT  = int(os.getenv("HTTP_PORT", "8000"))
 _MOUNT_PATH = os.getenv("MCP_MOUNT_PATH", "/mcp")
-
-from importlib.metadata import PackageNotFoundError, version
 
 try:
     _VERSION = version("sharepoint-mcp")

@@ -1,8 +1,10 @@
 """Tests for server-level mechanisms and routes."""
 import json
+
 import pytest
 
 from mcp_sharepoint.server import health_check
+
 
 @pytest.mark.asyncio
 async def test_health_check_success(mock_sp_context):

@@ -144,7 +144,9 @@ async def upload_from_path_tool(
     # or at minimum ensure it's not grabbing sensitive UNIX files:
     safe_target = os.path.abspath(file_path)
     if safe_target.startswith("/etc/") or safe_target.startswith("/var/") or safe_target == "/":
-         raise ValueError(f"LFI Prevention: Restricted system boundaries detected for target {file_path}")
+         raise ValueError(
+             f"LFI Prevention: Restricted system boundaries detected for target {file_path}"
+         )
          
     return await asyncio.to_thread(_upload_from_path, folder_name, file_path, new_file_name)
 
@@ -197,7 +199,9 @@ async def delete_document_tool(folder_name: str, file_name: str) -> dict[str, An
         "(with automatic fallback to ./downloads/)."
     ),
 )
-async def download_document_tool(folder_name: str, file_name: str, local_path: str) -> dict[str, Any]:
+async def download_document_tool(
+    folder_name: str, file_name: str, local_path: str,
+) -> dict[str, Any]:
     """Hydrates a remote SharePoint asset to local active system storage.
 
     Args:
