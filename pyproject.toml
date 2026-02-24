@@ -1,6 +1,6 @@
 [project]
 name = "sharepoint-mcp"
-version = "1.0.0"
+dynamic = ["version"]
 description = "Production-grade MCP Server for Microsoft SharePoint — manage folders, documents, and metadata with any MCP-compatible AI agent."
 readme = "README.md"
 license = { text = "MIT" }
@@ -54,7 +54,7 @@ dev = [
 sharepoint-mcp = "mcp_sharepoint:run"
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools_scm[toml]>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -63,6 +63,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
@@ -70,3 +71,6 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.setuptools_scm]
+write_to = "src/mcp_sharepoint/_version.py"

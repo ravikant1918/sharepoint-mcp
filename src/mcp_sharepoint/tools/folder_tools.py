@@ -1,6 +1,8 @@
 """MCP tool registrations for folder operations."""
 from __future__ import annotations
 
+import asyncio
+
 from ..server import mcp
 from ..services.folder_service import (
     create_folder as _create_folder,
@@ -24,7 +26,7 @@ from ..services.folder_service import (
     ),
 )
 async def list_folders_tool(parent_folder: str | None = None):
-    return _list_folders(parent_folder)
+    return await asyncio.to_thread(_list_folders, parent_folder)
 
 
 @mcp.tool(
@@ -35,7 +37,7 @@ async def list_folders_tool(parent_folder: str | None = None):
     ),
 )
 async def get_sharepoint_tree_tool(parent_folder: str | None = None):
-    return _get_folder_tree(parent_folder)
+    return await asyncio.to_thread(_get_folder_tree, parent_folder)
 
 
 @mcp.tool(
@@ -43,7 +45,7 @@ async def get_sharepoint_tree_tool(parent_folder: str | None = None):
     description="Create a new folder in a SharePoint directory (or library root if not specified).",
 )
 async def create_folder_tool(folder_name: str, parent_folder: str | None = None):
-    return _create_folder(folder_name, parent_folder)
+    return await asyncio.to_thread(_create_folder, folder_name, parent_folder)
 
 
 @mcp.tool(
@@ -51,4 +53,4 @@ async def create_folder_tool(folder_name: str, parent_folder: str | None = None)
     description="Delete an empty folder from SharePoint.",
 )
 async def delete_folder_tool(folder_path: str):
-    return _delete_folder(folder_path)
+    return await asyncio.to_thread(_delete_folder, folder_path)

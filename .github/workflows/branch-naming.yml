@@ -1,0 +1,29 @@
+name: Enforce Branch Naming
+
+on:
+  create:
+
+jobs:
+  check-branch-name:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ github.event.ref }}"
+          PATTERN="^(feature|bugfix|hotfix|release|dependabot)/.*$"
+
+          if [[ "$BRANCH" == "main" ]]; then
+            echo "✅ Default branch: $BRANCH"
+            exit 0
+          fi
+
+          if [[ "$BRANCH" =~ $PATTERN ]]; then
+            echo "✅ Branch name '$BRANCH' follows naming convention"
+          else
+            echo "❌ Branch name '$BRANCH' does NOT follow naming convention!"
+            echo ""
+            echo "Allowed prefixes: feature/ | bugfix/ | hotfix/ | release/"
+            echo "Examples: feature/search-sharepoint, bugfix/fix-upload, release/v1.1.0"
+            exit 1
+          fi

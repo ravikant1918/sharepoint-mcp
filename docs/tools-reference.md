@@ -1,6 +1,6 @@
 # Tools Reference
 
-Complete reference for all **12 MCP tools** provided by this server.
+Complete reference for all **13 MCP tools** provided by this server.
 
 ---
 
@@ -63,6 +63,18 @@ List all files in a folder with metadata.
 | `folder_name` | string | **Yes** | Relative path of the folder |
 
 **Returns:** Array of `{ name, url, size, created, modified }`
+
+---
+
+### `Search_SharePoint`
+Search SharePoint for documents using Keyword Query Language (KQL).
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `query` | string | **Yes** | KQL search query (e.g. "filename:report OR content:budget") |
+| `row_limit` | integer | No | Maximum number of results to return (default: 20) |
+
+**Returns:** Array of results with metadata like Title, Path, FileExtension, ServerRelativeUrl, HitHighlightedSummary, and Author.
 
 ---
 
@@ -171,3 +183,14 @@ Update one or more list-item metadata fields.
 | `metadata` | object | **Yes** | Key-value pairs to set (booleans and lists supported) |
 
 **Returns:** `{ success, message }`
+
+
+---
+
+## 🩺 Operational Endpoint (HTTP/SSE)
+
+While not an MCP tool, the server also exposes a health endpoint for runtime checks:
+
+- `GET /health` → `{ status, version, transport, tools }`
+
+This is useful for Docker health checks, load balancers, and uptime monitoring.

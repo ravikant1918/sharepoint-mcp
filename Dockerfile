@@ -21,6 +21,9 @@ WORKDIR /home/mcp/app
 COPY --chown=mcp:mcp pyproject.toml ./
 COPY --chown=mcp:mcp src/ ./src/
 
+ARG SETUPTOOLS_SCM_PRETEND_VERSION
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION}
+
 RUN pip install --no-cache-dir --user -e .
 
 ENV PATH="/home/mcp/.local/bin:$PATH"
@@ -36,6 +39,6 @@ ENV LOG_LEVEL=INFO
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import socket; s=socket.create_connection(('localhost',8000),timeout=5); s.close()" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
 CMD ["python", "-m", "mcp_sharepoint"]

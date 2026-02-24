@@ -2,19 +2,25 @@
 from __future__ import annotations
 
 import logging
+import posixpath
 from typing import Any
 
 from ..config import get_settings
 from ..core import get_sp_context
+from ..utils.retry import sp_retry
 
 logger = logging.getLogger(__name__)
 
 
 def _sp_path(sub_path: str = "") -> str:
     library = get_settings().shp_doc_library
-    return f"{library}/{sub_path}".rstrip("/")
+    clean_path = posixpath.normpath(f"/{sub_path}").lstrip("/") if sub_path else ""
+    if clean_path.startswith(".."):
+        raise ValueError(f"Invalid path traversal attempt: {sub_path}")
+    return f"{library}/{clean_path}".rstrip("/")
 
 
+@sp_retry
 def get_file_metadata(folder_name: str, file_name: str) -> dict[str, Any]:
     """Return all list-item properties for *file_name*."""
     ctx = get_sp_context()
@@ -39,6 +45,7 @@ def get_file_metadata(folder_name: str, file_name: str) -> dict[str, Any]:
     }
 
 
+@sp_retry
 def update_file_metadata(
     folder_name: str,
     file_name: str,

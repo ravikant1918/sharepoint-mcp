@@ -1,7 +1,9 @@
 services:
   sharepoint-mcp:
-    build: .
-    image: sharepoint-mcp:latest
+    image: ${SHAREPOINT_MCP_IMAGE:-iitdeveloperadmin/sharepoint-mcp}:${SHAREPOINT_MCP_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: sharepoint-mcp
     restart: unless-stopped
     ports:
@@ -30,7 +32,13 @@ services:
     volumes:
       - ./downloads:/home/mcp/app/downloads
     healthcheck:
-      test: [ "CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',8000),timeout=5); s.close()" ]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -5,26 +5,33 @@ import base64
 import io
 import logging
 import os
+import posixpath
+import tempfile
 from typing import Any
 
 from ..config import get_settings
 from ..core import get_sp_context
 from ..utils.parsers import detect_file_type, parse_excel, parse_pdf, parse_word
+from ..utils.retry import sp_retry
 
 logger = logging.getLogger(__name__)
 
 
 def _sp_path(sub_path: str = "") -> str:
     library = get_settings().shp_doc_library
-    return f"{library}/{sub_path}".rstrip("/")
+    clean_path = posixpath.normpath(f"/{sub_path}").lstrip("/") if sub_path else ""
+    if clean_path.startswith(".."):
+        raise ValueError(f"Invalid path traversal attempt: {sub_path}")
+    return f"{library}/{clean_path}".rstrip("/")
 
 
+@sp_retry
 def list_documents(folder_name: str) -> list[dict[str, Any]]:
     """List all files in *folder_name*."""
     logger.info("Listing documents in '%s'", folder_name)
     ctx = get_sp_context()
     folder = ctx.web.get_folder_by_server_relative_url(_sp_path(folder_name))
-    files = folder.files
+    files = folder.files.top(500)
     ctx.load(
         files,
         ["ServerRelativeUrl", "Name", "Length", "TimeCreated", "TimeLastModified"],
@@ -50,6 +57,39 @@ def list_documents(folder_name: str) -> list[dict[str, Any]]:
     ]
 
 
+@sp_retry
+def search_documents(query_text: str, row_limit: int = 20) -> list[dict[str, Any]]:
+    """Search SharePoint documents using KQL *query_text*."""
+    from office365.sharepoint.search.query.request import SearchRequest
+    logger.info("Searching SharePoint documents with query '%s'", query_text)
+    ctx = get_sp_context()
+    
+    # We scope the search to the site or specific document library using path exclusion/inclusion if needed
+    # For a general search within the site:
+    request = SearchRequest(
+        query_text=query_text,
+        row_limit=row_limit,
+        select_properties=["Title", "Path", "FileExtension", "ServerRelativeUrl", "HitHighlightedSummary", "Author"]
+    )
+    result = ctx.search.post_query(request)
+    ctx.execute_query()
+
+    results_list = []
+    if result.value and result.value.RelevantResults and result.value.RelevantResults.get("Table", {}).get("Rows"):
+        rows = result.value.RelevantResults["Table"]["Rows"]
+        for row in rows:
+            record = {}
+            for cell in row.get("Cells", []):
+                key = cell.get("Key")
+                val = cell.get("Value")
+                if key:
+                    record[key] = val
+            results_list.append(record)
+
+    return results_list
+
+
+@sp_retry
 def get_document_content(
     folder_name: str, file_name: str,
 ) -> dict[str, Any]:
@@ -133,6 +173,7 @@ def get_document_content(
     }
 
 
+@sp_retry
 def upload_document(
     folder_name: str,
     file_name: str,
@@ -161,6 +202,7 @@ def upload_document(
     }
 
 
+@sp_retry
 def upload_from_path(
     folder_name: str,
     file_path: str,
@@ -189,6 +231,7 @@ def upload_from_path(
     }
 
 
+@sp_retry
 def update_document(
     folder_name: str,
     file_name: str,
@@ -230,6 +273,7 @@ def update_document(
     }
 
 
+@sp_retry
 def delete_document(
     folder_name: str, file_name: str,
 ) -> dict[str, Any]:
@@ -257,12 +301,13 @@ def delete_document(
     }
 
 
+@sp_retry
 def download_document(
     folder_name: str,
     file_name: str,
     local_path: str,
 ) -> dict[str, Any]:
-    """Download a SharePoint file to *local_path* (fallback: ./downloads)."""
+    """Download a SharePoint file to *local_path* (fallback: system temp)."""
     ctx = get_sp_context()
     logger.info(
         "Downloading '%s/%s' → '%s'",
@@ -315,8 +360,7 @@ def download_document(
         "Primary save failed (%s), trying fallback",
         primary["error"],
     )
-    fallback_dir = "./downloads"
-    os.makedirs(fallback_dir, exist_ok=True)
+    fallback_dir = tempfile.gettempdir()
     fallback = _save(os.path.join(fallback_dir, file_name))
     if fallback["success"]:
         return {
