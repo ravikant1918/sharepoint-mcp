@@ -1,52 +1,21 @@
-"""SharePoint client factory supporting Office365, Graph REST, and GraphQL APIs.
+"""SharePoint Graph API client.
 
-Provides a unified interface for SharePoint operations using:
-- Office365 REST API (legacy/traditional)
-- Microsoft Graph REST API (modern)
-- Microsoft Graph GraphQL API (for organizations requiring GraphQL)
+Provides a cached Graph API client with MSAL authentication.
 """
 from __future__ import annotations
 
 import logging
 from functools import lru_cache
-from typing import Any, Protocol
+from typing import Any
 from urllib.parse import quote, urlparse
 
 import msal
 import requests
-from office365.runtime.auth.client_credential import ClientCredential
-from office365.sharepoint.client_context import ClientContext
 
 from ..config import get_settings
 from ..exceptions import SharePointConnectionError
 
 logger = logging.getLogger(__name__)
-
-
-class SharePointClient(Protocol):
-    """Protocol defining the interface for SharePoint clients."""
-    
-    api_type: str
-    
-    def __repr__(self) -> str:
-        """String representation of the client."""
-        ...
-
-
-class Office365Client:
-    """Wrapper for Office365 REST API ClientContext."""
-    
-    def __init__(self, ctx: ClientContext):
-        """Initialize with Office365 ClientContext.
-        
-        Args:
-            ctx: Authenticated ClientContext instance
-        """
-        self.ctx = ctx
-        self.api_type = "office365"
-    
-    def __repr__(self) -> str:
-        return f"Office365Client(site={self.ctx.base_url})"
 
 
 class GraphClient:
@@ -62,7 +31,6 @@ class GraphClient:
         self.access_token = access_token
         self.site_url = site_url
         self.base_url = "https://graph.microsoft.com/v1.0"
-        self.api_type = "graph"
         
         # Extract site components from URL
         parsed = urlparse(site_url)
@@ -76,14 +44,8 @@ class GraphClient:
             "Accept": "application/json",
         }
         
-        # Cache site ID
-        self._site_id_cache: str | None = None
-        
     def _get_site_id(self) -> str:
-        """Get the SharePoint site ID from the site URL (cached)."""
-        if self._site_id_cache:
-            return self._site_id_cache
-            
+        """Get the SharePoint site ID from the site URL."""
         # Format: /sites/{hostname}:{site_path}
         site_resource = f"{self.hostname}:{self.site_path}"
         url = f"{self.base_url}/sites/{site_resource}"
@@ -91,8 +53,7 @@ class GraphClient:
         try:
             response = requests.get(url, headers=self.headers, timeout=30)
             response.raise_for_status()
-            self._site_id_cache = response.json().get("id", "")
-            return self._site_id_cache
+            return response.json().get("id", "")
         except Exception as exc:
             logger.error(f"Failed to get site ID: {exc}")
             # Fallback: try root site
@@ -100,8 +61,7 @@ class GraphClient:
                 url = f"{self.base_url}/sites/{self.hostname}:{self.site_path}"
                 response = requests.get(url, headers=self.headers, timeout=30)
                 response.raise_for_status()
-                self._site_id_cache = response.json().get("id", "")
-                return self._site_id_cache
+                return response.json().get("id", "")
             except Exception as e:
                 logger.error(f"Fallback site ID lookup failed: {e}")
                 raise SharePointConnectionError(f"Cannot determine site ID: {exc}") from exc
@@ -231,52 +191,16 @@ class GraphClient:
             if hasattr(exc, 'response') and exc.response is not None:
                 logger.error(f"Response: {exc.response.text}")
             raise SharePointConnectionError(f"Graph API upload failed: {exc}") from exc
-    
-    def __repr__(self) -> str:
-        return f"GraphClient(site={self.site_url})"
 
 
 @lru_cache(maxsize=1)
-def get_sp_context() -> Office365Client | GraphClient:
-    """Return a cached, authenticated SharePoint client.
-
-    The client type is determined by the SHP_API_TYPE environment variable:
-    - "office365" (default): Uses Office365 REST API
-    - "graph": Uses Microsoft Graph REST API
-    - "graphql": Uses Microsoft Graph GraphQL API
+def get_sp_context() -> GraphClient:
+    """Return a cached, authenticated Microsoft Graph API client.
 
     Raises:
         SharePointConnectionError: if the client cannot be established.
     """
     settings = get_settings()
-    
-    if settings.shp_api_type == "graphql":
-        logger.info("Using Microsoft Graph GraphQL API client")
-        from .client_graphql import create_graphql_client
-        return create_graphql_client(settings)
-    elif settings.shp_api_type == "graph":
-        logger.info("Using Microsoft Graph REST API client")
-        return _create_graph_client(settings)
-    else:
-        logger.info("Using Office365 REST API client")
-        return _create_office365_client(settings)
-
-
-def _create_office365_client(settings) -> Office365Client:
-    """Create an Office365 REST API client."""
-    try:
-        credentials = ClientCredential(settings.shp_id_app, settings.shp_id_app_secret)
-        ctx = ClientContext(settings.shp_site_url).with_credentials(credentials)
-        logger.info("Office365 client context initialized for %s", settings.shp_site_url)
-        return Office365Client(ctx)
-    except Exception as exc:
-        msg = f"Failed to create Office365 client: {exc}"
-        logger.error(msg)
-        raise SharePointConnectionError(msg) from exc
-
-
-def _create_graph_client(settings) -> GraphClient:
-    """Create a Microsoft Graph API client."""
     try:
         # Create MSAL confidential client application
         app = msal.ConfidentialClientApplication(

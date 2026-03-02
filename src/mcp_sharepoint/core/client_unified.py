@@ -1,9 +1,8 @@
-"""SharePoint client factory supporting Office365, Graph REST, and GraphQL APIs.
+"""SharePoint client factory supporting both Office365 and Graph APIs.
 
-Provides a unified interface for SharePoint operations using:
+Provides a unified interface for SharePoint operations using either:
 - Office365 REST API (legacy/traditional)
-- Microsoft Graph REST API (modern)
-- Microsoft Graph GraphQL API (for organizations requiring GraphQL)
+- Microsoft Graph API (modern/GraphQL-based)
 """
 from __future__ import annotations
 
@@ -238,24 +237,19 @@ class GraphClient:
 
 @lru_cache(maxsize=1)
 def get_sp_context() -> Office365Client | GraphClient:
-    """Return a cached, authenticated SharePoint client.
+    """Return a cached, authenticated SharePoint client (Office365 or Graph API).
 
     The client type is determined by the SHP_API_TYPE environment variable:
     - "office365" (default): Uses Office365 REST API
-    - "graph": Uses Microsoft Graph REST API
-    - "graphql": Uses Microsoft Graph GraphQL API
+    - "graph": Uses Microsoft Graph API
 
     Raises:
         SharePointConnectionError: if the client cannot be established.
     """
     settings = get_settings()
     
-    if settings.shp_api_type == "graphql":
-        logger.info("Using Microsoft Graph GraphQL API client")
-        from .client_graphql import create_graphql_client
-        return create_graphql_client(settings)
-    elif settings.shp_api_type == "graph":
-        logger.info("Using Microsoft Graph REST API client")
+    if settings.shp_api_type == "graph":
+        logger.info("Using Microsoft Graph API client")
         return _create_graph_client(settings)
     else:
         logger.info("Using Office365 REST API client")

@@ -23,10 +23,12 @@ class Settings:
     shp_tenant_id: str
 
     # --- SharePoint optional ---
+    shp_library_name: str
     shp_doc_library: str
     shp_max_depth: int
     shp_max_folders_per_level: int
     shp_level_delay: float
+    shp_api_type: str  # "office365" | "graph"
 
     # --- Server / transport ---
     transport: str      # "stdio" | "http"
@@ -56,10 +58,19 @@ class Settings:
             logger.error("config_error", missing=missing)
             raise SharePointConfigError(msg)
 
-        self.shp_doc_library = os.getenv("SHP_DOC_LIBRARY", "Shared Documents/mcp_server")
+        self.shp_library_name = os.getenv("SHP_LIBRARY_NAME", "Shared Documents")
+        self.shp_doc_library = os.getenv("SHP_DOC_LIBRARY", "").strip()
         self.shp_max_depth = int(os.getenv("SHP_MAX_DEPTH", "15"))
         self.shp_max_folders_per_level = int(os.getenv("SHP_MAX_FOLDERS_PER_LEVEL", "100"))
         self.shp_level_delay = float(os.getenv("SHP_LEVEL_DELAY", "0.5"))
+        self.shp_api_type = os.getenv("SHP_API_TYPE", "office365").lower()
+        
+        # Validate API type
+        if self.shp_api_type not in ("office365", "graph", "graphql"):
+            logger.warning(
+                f"Invalid SHP_API_TYPE '{self.shp_api_type}', defaulting to 'office365'"
+            )
+            self.shp_api_type = "office365"
 
         self.transport = os.getenv("TRANSPORT", "stdio").lower()
         self.http_host = os.getenv("HTTP_HOST", "0.0.0.0")
@@ -71,7 +82,9 @@ class Settings:
     def __repr__(self) -> str:  # pragma: no cover
         return (
             f"Settings(site={self.shp_site_url!r}, "
-            f"library={self.shp_doc_library!r}, "
+            f"library_name={self.shp_library_name!r}, "
+            f"scope={self.shp_doc_library!r}, "
+            f"api_type={self.shp_api_type!r}, "
             f"transport={self.transport!r})"
         )
 
