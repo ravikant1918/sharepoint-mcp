@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        SETUPTOOLS_SCM_PRETEND_VERSION: ${SETUPTOOLS_SCM_PRETEND_VERSION:-latest}
     container_name: sharepoint-mcp
     restart: unless-stopped
     ports:
@@ -23,7 +25,8 @@ services:
       SHP_ID_APP_SECRET: ${SHP_ID_APP_SECRET}
       SHP_TENANT_ID: ${SHP_TENANT_ID}
       SHP_SITE_URL: ${SHP_SITE_URL}
-      SHP_DOC_LIBRARY: ${SHP_DOC_LIBRARY:-Shared Documents/mcp_server}
+      SHP_LIBRARY_NAME: ${SHP_LIBRARY_NAME:-Shared Documents}
+      SHP_DOC_LIBRARY: ${SHP_DOC_LIBRARY:-}
 
       # Optional tuning
       SHP_MAX_DEPTH: ${SHP_MAX_DEPTH:-15}

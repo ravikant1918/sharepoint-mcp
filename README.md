@@ -96,19 +96,22 @@ Agent: → List_SharePoint_Documents("Legal/Contracts")
 
 ## ✨ Features
 
-|     | Feature                 | Description                                          |
-| --- | ----------------------- | ---------------------------------------------------- |
-| 📁  | **Folder Management**   | List, create, delete, get full recursive tree        |
-| 📄  | **Document Management** | Upload, download, update, delete, search, read content|
-| 🏷️  | **Metadata Management** | Read and update SharePoint list-item fields          |
-| 🔍  | **Smart Parsing**       | Auto-detects PDF / Word / Excel / text               |
-| 🔎  | **KQL Search**          | Native SharePoint KQL search for semantic file finding|
-| 🔁  | **Auto-Retry**          | Exponential backoff on SharePoint 429/503 throttling |
-| 🚀  | **Dual Transport**      | `stdio` for desktop · `http` for Docker/remote       |
-| 🪵  | **Structured Logging**  | JSON in production · coloured console in dev         |
-| 🐳  | **Docker-Ready**        | Single command: `docker compose up -d`               |
-| 🛡️  | **Non-Root Container**  | Runs as unprivileged user inside Docker              |
-| 🤖  | **CI/CD**               | Tested on Python 3.10 · 3.11 · 3.12 · 3.13           |
+|     | Feature                    | Description                                            |
+| --- | -------------------------- | ------------------------------------------------------ |
+| 🔀  | **Dual API Support**       | Choose Office365 REST or Microsoft Graph API           |
+| 📁  | **Folder Management**      | List, create, delete, get full recursive tree          |
+| 📄  | **Document Management**    | Upload, download, update, delete, search, read content |
+| 🏷️  | **Metadata Management**    | Read and update SharePoint list-item fields            |
+| 🔍  | **Smart Parsing**          | Auto-detects PDF / Word / Excel / text                 |
+| 🔎  | **KQL Search**             | Native SharePoint KQL search for semantic file finding |
+| 📂  | **Flexible Library Scope** | Scope to a subfolder or access the entire library root |
+| 🔁  | **Auto-Retry**             | Exponential backoff on SharePoint 429/503 throttling   |
+| 🚀  | **Dual Transport**         | `stdio` for desktop · `http` for Docker/remote         |
+| 🪵  | **Structured Logging**     | JSON in production · coloured console in dev           |
+| 🐳  | **Docker-Ready**           | Single command: `docker compose up -d`                 |
+| 🛡️  | **Non-Root Container**     | Runs as unprivileged user inside Docker                |
+| 🩺  | **Health Check**           | Live `/health` endpoint with real SharePoint check     |
+| 🤖  | **CI/CD**                  | Tested on Python 3.10 · 3.11 · 3.12 · 3.13             |
 
 ---
 
@@ -139,9 +142,24 @@ SHP_ID_APP=your-azure-app-client-id
 SHP_ID_APP_SECRET=your-azure-app-secret
 SHP_TENANT_ID=your-tenant-id
 SHP_SITE_URL=https://your-tenant.sharepoint.com/sites/your-site
+SHP_API_TYPE=office365   # or "graph" / "graphql" for Microsoft Graph API
 ```
 
-> 🔑 **New to Azure AD?** Follow the [step-by-step guide →](docs/azure-setup.md)
+> 🔑 **New to Azure AD?** Follow the [step-by-step guide →](docs/azure-setup.md)  
+> 🔀 **Choose Your API**: SharePoint MCP supports both **Office365 REST API** (default) and **Microsoft Graph API**. See [API Configuration Guide →](docs/api-configuration.md)
+
+#### Optional: Scope to a subfolder
+
+By default, the server accesses your **entire document library root**. To restrict operations to a specific subfolder:
+
+```env
+# Only operate within this subfolder (omit for full library access)
+SHP_DOC_LIBRARY=mcp_server
+
+# Library name (only needed if your org renamed "Shared Documents")
+# Graph API auto-detects the default drive — this is only for Office365 REST API
+# SHP_LIBRARY_NAME=Shared Documents
+```
 
 ### 3️⃣ Run
 
@@ -322,12 +340,14 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
         "SHP_ID_APP_SECRET": "your-app-secret",
         "SHP_SITE_URL": "https://your-tenant.sharepoint.com/sites/your-site",
         "SHP_TENANT_ID": "your-tenant-id",
-        "SHP_DOC_LIBRARY": "Shared Documents/your-folder"
+        "SHP_DOC_LIBRARY": "my-subfolder"
       }
     }
   }
 }
 ```
+
+> 💡 Omit `SHP_DOC_LIBRARY` to access the full library root. If your org uses Office365 REST API and renamed the default library, also set `SHP_LIBRARY_NAME`.
 
 ### 💻 VS Code Copilot (Agent Mode)
 
@@ -345,7 +365,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-3. Open Copilot Chat → switch to **Agent mode** → your 13 SharePoint tools are available.
+3. Open Copilot Chat → switch to **Agent mode** → your 14 SharePoint tools are available.
 
 > ⚠️ **Trailing slash matters** — the URL must end with `/mcp/` (not `/mcp`).
 
@@ -406,21 +426,23 @@ Add to your MCP config (uses stdio transport):
 
 ## ⚙️ Full Configuration Reference
 
-| Variable                    | Required | Default                                              | Description                      |
-| --------------------------- | -------- | ---------------------------------------------------- | -------------------------------- |
-| `SHP_ID_APP`                |          | `12345678-1234-1234-1234-123456789012`               | Azure AD app client ID           |
-| `SHP_ID_APP_SECRET`         |          | `your-app-secret`                                    | Azure AD client secret           |
-| `SHP_TENANT_ID`             |          | `your-tenant-id`                                     | Microsoft tenant ID              |
-| `SHP_SITE_URL`              |          | `https://your-tenant.sharepoint.com/sites/your-site` | SharePoint site URL              |
-| `SHP_DOC_LIBRARY`           |          | `Shared Documents/mcp_server`                        | Library path                     |
-| `SHP_MAX_DEPTH`             |          | `15`                                                 | Max tree depth                   |
-| `SHP_MAX_FOLDERS_PER_LEVEL` |          | `100`                                                | Folders per batch                |
-| `SHP_LEVEL_DELAY`           |          | `0.5`                                                | Delay (s) between tree levels    |
-| `TRANSPORT`                 |          | `stdio`                                              | `stdio` or `http`                |
-| `HTTP_HOST`                 |          | `0.0.0.0`                                            | HTTP bind host                   |
-| `HTTP_PORT`                 |          | `8000`                                               | HTTP port                        |
-| `LOG_LEVEL`                 |          | `INFO`                                               | `DEBUG` `INFO` `WARNING` `ERROR` |
-| `LOG_FORMAT`                |          | `console`                                            | `console` or `json`              |
+| Variable                    | Required | Default                  | Description                                                 |
+| --------------------------- | -------- | ------------------------ | ----------------------------------------------------------- |
+| `SHP_ID_APP`                | ✅       |                          | Azure AD app client ID                                      |
+| `SHP_ID_APP_SECRET`         | ✅       |                          | Azure AD client secret                                      |
+| `SHP_TENANT_ID`             | ✅       |                          | Microsoft tenant ID                                         |
+| `SHP_SITE_URL`              | ✅       |                          | SharePoint site URL                                         |
+| `SHP_API_TYPE`              |          | `office365`              | `office365`, `graph`, or `graphql`                          |
+| `SHP_LIBRARY_NAME`          |          | `Shared Documents`       | Library name (Office365 REST only; Graph auto-detects)      |
+| `SHP_DOC_LIBRARY`           |          | _(empty = full library)_ | Subfolder scope (e.g. `mcp_server`). Empty = entire library |
+| `SHP_MAX_DEPTH`             |          | `15`                     | Max tree depth                                              |
+| `SHP_MAX_FOLDERS_PER_LEVEL` |          | `100`                    | Folders per batch                                           |
+| `SHP_LEVEL_DELAY`           |          | `0.5`                    | Delay (s) between tree levels                               |
+| `TRANSPORT`                 |          | `stdio`                  | `stdio` or `http`                                           |
+| `HTTP_HOST`                 |          | `0.0.0.0`                | HTTP bind host                                              |
+| `HTTP_PORT`                 |          | `8000`                   | HTTP port                                                   |
+| `LOG_LEVEL`                 |          | `INFO`                   | `DEBUG` `INFO` `WARNING` `ERROR`                            |
+| `LOG_FORMAT`                |          | `console`                | `console` or `json`                                         |
 
 ---
 

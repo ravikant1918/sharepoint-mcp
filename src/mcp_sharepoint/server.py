@@ -91,9 +91,16 @@ async def health_check(request):  # noqa: ARG001
     try:
         def _verify_sp() -> None:
             from .core import get_sp_context
-            ctx = get_sp_context()
-            ctx.load(ctx.web)
-            ctx.execute_query()
+            client = get_sp_context()
+            
+            # Test connection based on API type
+            if client.api_type in ("graph", "graphql"):
+                # For Graph/GraphQL API, try to get site ID
+                client._get_site_id()
+            else:
+                # For Office365 API, use traditional load/execute
+                client.ctx.load(client.ctx.web)
+                client.ctx.execute_query()
             
         await asyncio.to_thread(_verify_sp)
         sp_status = "connected"
@@ -125,7 +132,10 @@ async def main() -> None:
     # Eagerly validate config — fail fast before any tool is called
     from .config import get_settings  # noqa: PLC0415
     settings = get_settings()
-    logger.info("config loaded", doc_library=settings.shp_doc_library)
+    if settings.shp_doc_library:
+        logger.info("config loaded — scoped to subfolder", library_name=settings.shp_library_name, scope=settings.shp_doc_library)
+    else:
+        logger.info("config loaded — full library access", library_name=settings.shp_library_name)
 
     # Register all tools (side-effect of importing the tool modules)
     from .tools import document_tools, folder_tools, metadata_tools  # noqa: F401, PLC0415

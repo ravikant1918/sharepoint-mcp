@@ -11,16 +11,59 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - `Search_SharePoint` — full-text search using SharePoint KQL
+- **Config:** `SHP_LIBRARY_NAME` environment variable — specifies the SharePoint document library name (defaults to `"Shared Documents"`). Only used by Office365 REST API; Graph API auto-detects the default drive via `drive/root`.
 
 ### Changed
 
+- **Config:** `SHP_DOC_LIBRARY` is now **subfolder-scope only** (e.g., `mcp_server`). Previously it expected the full path including the library name (e.g., `Shared Documents/mcp_server`), which caused double-path issues on Graph API. When left empty, the server operates on the entire library root.
+- **Config:** Default for `SHP_DOC_LIBRARY` changed from `"Shared Documents/mcp_server"` (hardcoded) to `""` (empty = full library access). Users who need to scope to a subfolder set only the subfolder name.
 - **Robustness:** Enhanced the `/health` endpoint to perform a live `execute_query` check against SharePoint. Now returns HTTP 503 instead of false-positive 200s if the SP connection is failing.
 
 ### Fixed
 
+- **Critical (Graph API):** Fixed 404 errors caused by double library-name in Graph API paths. The Graph API's `drive/root` already **is** the document library, so prepending the library name produced invalid paths like `drive/root:/Shared Documents/Shared Documents:/children`. All three Graph service files (`folder_service_graph.py`, `document_service_graph.py`, `metadata_service_graph.py`) now use a `_drive_item_url()` helper that correctly handles:
+  - **Root access:** `drive/root/children` (when no subfolder scope is set)
+  - **Nested access:** `drive/root:/subfolder:/children` (when `SHP_DOC_LIBRARY` is set)
+- **Config:** Office365 REST API path builder now correctly constructs `library_name/scope/sub_path`, filtering out empty segments to avoid double slashes.
 - **Security:** Added Local File Inclusion (LFI) protection to `Upload_Document_From_Path` to restrict AI agents from reading sensitive local paths.
 - **Robustness:** Applied explicit return type hints (`-> dict[str, Any]` and `-> list[dict[str, Any]]`) to all 8 MCP document tools to strengthen static analysis and protocol reliability.
 - **Documentation:** Added comprehensive PEP-257 docstrings to all tool entry points for better intellisenense and internal maintainability.
+
+### Files Changed
+
+| File                                                        | What changed                                                                                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/mcp_sharepoint/config/settings.py`                     | Added `shp_library_name` field; changed `shp_doc_library` default from `"Shared Documents/mcp_server"` to `""` (empty); updated `__repr__` |
+| `src/mcp_sharepoint/server.py`                              | Log message now distinguishes scoped vs full-library mode, includes `library_name`                                                         |
+| `src/mcp_sharepoint/services/folder_service_graph.py`       | Replaced `_normalize_path` (no library prefix); added `_drive_item_url()` helper; updated all endpoint construction                        |
+| `src/mcp_sharepoint/services/document_service_graph.py`     | Same as above — `_normalize_path` + `_drive_item_url()`, updated all ~10 endpoint calls                                                    |
+| `src/mcp_sharepoint/services/metadata_service_graph.py`     | Same as above — `_normalize_path` + `_drive_item_url()`, updated get/update metadata endpoints                                             |
+| `src/mcp_sharepoint/services/folder_service_office365.py`   | `_sp_path` now builds from `library_name + scope + sub_path` (filters empty parts)                                                         |
+| `src/mcp_sharepoint/services/document_service_office365.py` | Same `_sp_path` fix                                                                                                                        |
+| `src/mcp_sharepoint/services/metadata_service_office365.py` | Same `_sp_path` fix                                                                                                                        |
+| `.env`                                                      | `SHP_DOC_LIBRARY=` (empty); added commented `SHP_LIBRARY_NAME`                                                                             |
+| `.env.example`                                              | Updated docs and defaults; `SHP_DOC_LIBRARY` commented out; added `SHP_LIBRARY_NAME`                                                       |
+| `docker-compose.yml`                                        | Added `SHP_LIBRARY_NAME` env var; `SHP_DOC_LIBRARY` defaults to empty                                                                      |
+
+### Migration Guide (from previous config)
+
+**Before:**
+
+```env
+SHP_DOC_LIBRARY=Shared Documents/mcp_server
+```
+
+**After:**
+
+```env
+# Library name (only needed for Office365 REST API; Graph auto-detects)
+# SHP_LIBRARY_NAME=Shared Documents
+
+# Subfolder scope (empty = full library, just the subfolder name)
+SHP_DOC_LIBRARY=mcp_server
+```
+
+If you were using Graph API (`SHP_API_TYPE=graphql` or `graph`), only `SHP_DOC_LIBRARY` matters — set it to the subfolder name alone, or leave empty for full access.
 
 ### Planned
 
