@@ -10,6 +10,7 @@ from urllib.parse import quote
 from ..config import get_settings
 from ..core import get_sp_context
 from ..utils.retry import sp_retry
+from ..exceptions import SharePointConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +21,27 @@ def _normalize_path(sub_path: str | None = None) -> str:
     Returns empty string when both scope and sub_path are empty (= drive root).
     Graph API's drive/root already IS the document library, so NO library name
     is prepended.
+    
+    This function now uses the GraphClient's normalize_path method to properly
+    handle SharePoint library names like "Shared Documents".
     """
+    client = get_sp_context()
     scope = get_settings().shp_doc_library
     clean_path = posixpath.normpath(f"/{sub_path}").lstrip("/") if sub_path else ""
     if clean_path.startswith(".."):
         raise ValueError(f"Invalid path traversal attempt: {sub_path}")
+    
+    # Combine scope and path
     parts = [p for p in [scope, clean_path] if p]
-    return "/".join(parts)
+    combined_path = "/".join(parts)
+    
+    # Use client's normalize_path if available (for Graph API)
+    if hasattr(client, 'normalize_path'):
+        normalized = client.normalize_path(combined_path)
+        logger.debug(f"Path normalization: '{combined_path}' → '{normalized}'")
+        return normalized
+    
+    return combined_path
 
 
 def _drive_item_url(site_id: str, path: str, suffix: str = "") -> str:
@@ -119,7 +134,12 @@ def delete_folder(folder_path: str) -> dict[str, Any]:
         metadata_endpoint = _drive_item_url(site_id, full_path)
         metadata = client.get(metadata_endpoint)
         folder_id = metadata.get("id")
-    except Exception:
+    except SharePointConnectionError as exc:
+        logger.error(
+            "Folder not found for deletion",
+            folder_path=folder_path,
+            error=str(exc)
+        )
         return {"success": False, "message": f"Folder '{folder_path}' does not exist"}
 
     # Check if folder has children
@@ -205,8 +225,13 @@ def get_folder_tree(parent_folder: str | None = None) -> dict[str, Any]:
                     pending.extend(
                         f"{fp}/{f.get('name')}".strip("/") for f in folders
                     )
-                except Exception:
-                    logger.warning("Failed to process folder: %s", fp)
+                except SharePointConnectionError as exc:
+                    logger.warning(
+                        "Failed to process folder in tree traversal",
+                        folder_path=fp,
+                        error=str(exc),
+                        error_type=type(exc).__name__
+                    )
             if current:
                 time.sleep(0.1)
 

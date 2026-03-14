@@ -168,8 +168,13 @@ def get_folder_tree(parent_folder: str | None = None) -> dict[str, Any]:
                     pending.extend(
                         f"{fp}/{n}".strip("/") for n in sub_folders
                     )
-                except Exception:
-                    logger.warning("Failed to process folder: %s", fp)
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to process folder in tree traversal",
+                        folder_path=fp,
+                        error=str(exc),
+                        error_type=type(exc).__name__
+                    )
             if current:
                 time.sleep(0.1)
 

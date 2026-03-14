@@ -18,12 +18,39 @@ logger = logging.getLogger(__name__)
 
 
 def _sp_path(sub_path: str = "") -> str:
+    """Build SharePoint path with comprehensive traversal protection.
+    
+    Args:
+        sub_path: User-provided relative path within the library
+        
+    Returns:
+        Safe SharePoint path
+        
+    Raises:
+        ValueError: If path traversal or invalid characters detected
+    """
     settings = get_settings()
     library_name = settings.shp_library_name
     scope = settings.shp_doc_library
-    clean_path = posixpath.normpath(f"/{sub_path}").lstrip("/") if sub_path else ""
-    if clean_path.startswith(".."):
-        raise ValueError(f"Invalid path traversal attempt: {sub_path}")
+    
+    if not sub_path:
+        clean_path = ""
+    else:
+        # Reject paths with suspicious patterns BEFORE normalization
+        if ".." in sub_path or sub_path.startswith("/") or sub_path.startswith("\\"):
+            raise ValueError(f"Invalid path traversal attempt: {sub_path}")
+        
+        # Reject null bytes and other dangerous characters
+        if "\x00" in sub_path or any(c in sub_path for c in ["\r", "\n"]):
+            raise ValueError(f"Invalid characters in path: {sub_path}")
+        
+        # Normalize and validate
+        clean_path = posixpath.normpath(f"/{sub_path}").lstrip("/")
+        
+        # Double-check after normalization (defense in depth)
+        if ".." in clean_path or clean_path.startswith("/"):
+            raise ValueError(f"Path traversal detected after normalization: {sub_path}")
+    
     parts = [p for p in [library_name, scope, clean_path] if p]
     return "/".join(parts)
 
@@ -147,7 +174,13 @@ def get_document_content(
                 "size": len(content_bytes),
             }
         except Exception as exc:
-            logger.warning("Excel parse failed: %s", exc)
+            logger.error(
+                "Excel parse failed",
+                file_name=file_name,
+                error=str(exc),
+                error_type=type(exc).__name__
+            )
+            # Fallback to base64 for failed parse
 
     elif file_type == "word":
         try:
@@ -161,7 +194,13 @@ def get_document_content(
                 "size": len(content_bytes),
             }
         except Exception as exc:
-            logger.warning("Word parse failed: %s", exc)
+            logger.error(
+                "Word parse failed",
+                file_name=file_name,
+                error=str(exc),
+                error_type=type(exc).__name__
+            )
+            # Fallback to base64 for failed parse
 
     elif file_type == "text":
         try:
@@ -171,8 +210,12 @@ def get_document_content(
                 "content": content_bytes.decode("utf-8"),
                 "size": len(content_bytes),
             }
-        except UnicodeDecodeError:
-            pass
+        except UnicodeDecodeError as exc:
+            logger.warning(
+                "Text decode failed, falling back to base64",
+                file_name=file_name,
+                error=str(exc)
+            )
 
     # Fallback: return as base64 binary
     return {

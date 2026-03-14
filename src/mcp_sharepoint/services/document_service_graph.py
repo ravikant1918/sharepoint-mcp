@@ -24,13 +24,27 @@ def _normalize_path(sub_path: str = "") -> str:
     Returns empty string when both scope and sub_path are empty (= drive root).
     Graph API's drive/root already IS the document library, so NO library name
     is prepended.
+    
+    This function now uses the GraphClient's normalize_path method to properly
+    handle SharePoint library names like "Shared Documents".
     """
+    client = get_sp_context()
     scope = get_settings().shp_doc_library
     clean_path = posixpath.normpath(f"/{sub_path}").lstrip("/") if sub_path else ""
     if clean_path.startswith(".."):
         raise ValueError(f"Invalid path traversal attempt: {sub_path}")
+    
+    # Combine scope and path
     parts = [p for p in [scope, clean_path] if p]
-    return "/".join(parts)
+    combined_path = "/".join(parts)
+    
+    # Use client's normalize_path if available (for Graph API)
+    if hasattr(client, 'normalize_path'):
+        normalized = client.normalize_path(combined_path)
+        logger.debug(f"Path normalization: '{combined_path}' → '{normalized}'")
+        return normalized
+    
+    return combined_path
 
 
 def _drive_item_url(site_id: str, path: str, suffix: str = "") -> str:
@@ -174,7 +188,13 @@ def get_document_content(
                 "size": len(content_bytes),
             }
         except Exception as exc:
-            logger.warning("Excel parse failed: %s", exc)
+            logger.error(
+                "Excel parse failed",
+                file_name=file_name,
+                error=str(exc),
+                error_type=type(exc).__name__
+            )
+            # Fallback to base64 for failed parse
 
     elif file_type == "word":
         try:
@@ -188,7 +208,13 @@ def get_document_content(
                 "size": len(content_bytes),
             }
         except Exception as exc:
-            logger.warning("Word parse failed: %s", exc)
+            logger.error(
+                "Word parse failed",
+                file_name=file_name,
+                error=str(exc),
+                error_type=type(exc).__name__
+            )
+            # Fallback to base64 for failed parse
 
     elif file_type == "text":
         try:
@@ -198,8 +224,12 @@ def get_document_content(
                 "content": content_bytes.decode("utf-8"),
                 "size": len(content_bytes),
             }
-        except UnicodeDecodeError:
-            pass
+        except UnicodeDecodeError as exc:
+            logger.warning(
+                "Text decode failed, falling back to base64",
+                file_name=file_name,
+                error=str(exc)
+            )
 
     # Fallback: return as base64 binary
     return {
@@ -301,7 +331,13 @@ def update_document(
         metadata_endpoint = _drive_item_url(site_id, file_path)
         metadata = client.get(metadata_endpoint)
         file_id = metadata.get("id")
-    except Exception:
+    except SharePointConnectionError as exc:
+        logger.error(
+            "File not found for update",
+            folder=folder_name,
+            file=file_name,
+            error=str(exc)
+        )
         return {
             "success": False,
             "message": (
@@ -346,7 +382,13 @@ def delete_document(
         metadata_endpoint = _drive_item_url(site_id, file_path)
         metadata = client.get(metadata_endpoint)
         file_id = metadata.get("id")
-    except Exception:
+    except SharePointConnectionError as exc:
+        logger.error(
+            "File not found for deletion",
+            folder=folder_name,
+            file=file_name,
+            error=str(exc)
+        )
         return {
             "success": False,
             "message": (
@@ -388,7 +430,13 @@ def download_document(
         metadata_endpoint = _drive_item_url(site_id, file_path)
         metadata = client.get(metadata_endpoint)
         file_id = metadata.get("id")
-    except Exception:
+    except SharePointConnectionError as exc:
+        logger.error(
+            "File not found for download",
+            folder=folder_name,
+            file=file_name,
+            error=str(exc)
+        )
         return {
             "success": False,
             "error": f"File '{file_name}' not found in '{folder_name}'",

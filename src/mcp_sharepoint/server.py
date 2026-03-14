@@ -81,8 +81,28 @@ mcp = FastMCP(
 # Health check endpoint — used by Docker, load balancers, and monitoring
 # ---------------------------------------------------------------------------
 @mcp.custom_route("/health", methods=["GET"])
-async def health_check(request):  # noqa: ARG001
-    """Return server health status as JSON, including live SharePoint access validation."""
+async def health_check(request: Any) -> Any:  # noqa: ARG001
+    """Return server health status as JSON, including live SharePoint access validation.
+    
+    This endpoint validates live SharePoint connectivity and returns
+    operational metrics suitable for load balancer health checks.
+    
+    Args:
+        request: Starlette request object (unused, required by route signature)
+    
+    Returns:
+        JSONResponse with fields:
+            - status: "ok" | "degraded"
+            - version: Package version string
+            - transport: Active transport mode
+            - tools: Number of registered tools
+            - sharepoint: "connected" | "disconnected" | "unknown"
+            - sharepoint_error (optional): Error details if connection failed
+    
+    Status Codes:
+        200: SharePoint connectivity verified
+        503: SharePoint connection failed (service degraded)
+    """
     from starlette.responses import JSONResponse
     
     sp_status = "unknown"

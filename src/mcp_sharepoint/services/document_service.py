@@ -120,4 +120,4 @@ def download_document(
         return document_service_graph.download_document(folder_name, file_name, local_path)
     else:
         from . import document_service_office365
-        return document_service_graph.download_document(folder_name, file_name, local_path)
+        return document_service_office365.download_document(folder_name, file_name, local_path)
