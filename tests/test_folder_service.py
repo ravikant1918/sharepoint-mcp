@@ -40,7 +40,12 @@ class TestListFolders:
         # relying on the heavy ClientContext mocking internals.
         with patch(
             "mcp_sharepoint.services.folder_service_office365.list_folders",
-            return_value=[{"name": "reports", "url": "/sites/test/Shared Documents/mcp_server/reports"}],
+            return_value=[
+                {
+                    "name": "reports",
+                    "url": "/sites/test/Shared Documents/mcp_server/reports",
+                },
+            ],
         ):
             from mcp_sharepoint.services.folder_service import list_folders
             result = list_folders()

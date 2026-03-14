@@ -5,6 +5,7 @@ import asyncio
 import os
 from typing import Any
 
+from ..config import get_settings
 from ..server import mcp
 from ..services.document_service import (
     delete_document as _delete_document,
@@ -30,7 +31,6 @@ from ..services.document_service import (
 from ..services.document_service import (
     upload_from_path as _upload_from_path,
 )
-from ..config import get_settings
 
 
 def _get_default_folder() -> str:
@@ -218,8 +218,8 @@ async def upload_from_path_tool(
     
     if not is_allowed:
         raise ValueError(
-            f"File path outside allowed directories. "
-            f"Allowed: Downloads, Documents, Desktop, /tmp, current directory"
+            "File path outside allowed directories. "
+            "Allowed: Downloads, Documents, Desktop, /tmp, current directory"
         )
     
     # Additional safety checks
@@ -229,7 +229,12 @@ async def upload_from_path_tool(
     if safe_target.stat().st_size > 100 * 1024 * 1024:  # 100MB limit
         raise ValueError("File exceeds maximum upload size (100MB)")
          
-    return await asyncio.to_thread(_upload_from_path, folder_name, str(safe_target), new_file_name)
+    return await asyncio.to_thread(
+        _upload_from_path,
+        folder_name,
+        str(safe_target),
+        new_file_name,
+    )
 
 
 @mcp.tool(

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 
+from ..config import get_settings
 from ..server import mcp
 from ..services.folder_service import (
     create_folder as _create_folder,
@@ -16,7 +17,6 @@ from ..services.folder_service import (
 from ..services.folder_service import (
     list_folders as _list_folders,
 )
-from ..config import get_settings
 
 
 def _get_default_folder() -> str:

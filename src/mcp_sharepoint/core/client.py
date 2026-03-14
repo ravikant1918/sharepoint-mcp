@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 from typing import Any, Protocol
-from urllib.parse import quote, urlparse
+from urllib.parse import urlparse
 
 import msal
 import requests

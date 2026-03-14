@@ -1,6 +1,6 @@
 """Tests for server-level mechanisms and routes."""
-import json
 import asyncio
+import json
 
 from mcp_sharepoint.server import health_check
 

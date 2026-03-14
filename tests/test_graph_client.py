@@ -1,14 +1,11 @@
 """Unit tests for the GraphClient wrapper in core/client.py."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
-import pytest
-
-import requests
-
 import sys
 import types
+
+import pytest
+import requests
 
 # Provide lightweight stubs for heavy external dependencies so tests
 # can import the module without installing them.
@@ -34,8 +31,8 @@ class _DummyCtx:
     base_url = "https://example.com"
 sys.modules["office365.sharepoint.client_context"].ClientContext = lambda url: _DummyCtx()
 
-from mcp_sharepoint.core.client import GraphClient
-from mcp_sharepoint.exceptions import SharePointConnectionError
+from mcp_sharepoint.core.client import GraphClient  # noqa: E402
+from mcp_sharepoint.exceptions import SharePointConnectionError  # noqa: E402
 
 
 class DummyResponse:

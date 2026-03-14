@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import base64
-import io
 import logging
 import os
 import posixpath
@@ -12,6 +11,7 @@ from urllib.parse import quote
 
 from ..config import get_settings
 from ..core import get_sp_context
+from ..exceptions import SharePointConnectionError
 from ..utils.parsers import detect_file_type, parse_excel, parse_pdf, parse_word
 from ..utils.retry import sp_retry
 
@@ -121,10 +121,12 @@ def search_documents(query_text: str, row_limit: int = 20) -> list[dict[str, Any
     results = []
     for item in items:
         if "file" in item:  # Only files, not folders
+            name = item.get("name", "")
+            ext = name.split(".")[-1] if "." in name else ""
             results.append({
-                "Title": item.get("name"),
+                "Title": name,
                 "Path": item.get("webUrl"),
-                "FileExtension": item.get("name", "").split(".")[-1] if "." in item.get("name", "") else "",
+                "FileExtension": ext,
                 "ServerRelativeUrl": item.get("webUrl"),
                 "id": item.get("id"),
             })

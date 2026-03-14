@@ -10,15 +10,15 @@ import logging
 import threading
 import time
 from functools import lru_cache
-from typing import Any, Optional, Protocol
-from urllib.parse import quote, urlparse
+from typing import Any, Protocol
+from urllib.parse import urlparse
 
 import msal
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 from office365.runtime.auth.client_credential import ClientCredential
 from office365.sharepoint.client_context import ClientContext
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from ..config import get_settings
 from ..exceptions import SharePointConnectionError
@@ -35,7 +35,7 @@ class TokenCache:
     
     def __init__(self):
         """Initialize empty token cache with thread lock."""
-        self.token: Optional[str] = None
+        self.token: str | None = None
         self.expires_at: float = 0
         self._lock = threading.Lock()
     
@@ -68,7 +68,7 @@ class TokenCache:
             # Refresh 5 minutes (300s) before actual expiry to prevent edge cases
             return time.time() >= (self.expires_at - buffer_seconds)
     
-    def get_token(self) -> Optional[str]:
+    def get_token(self) -> str | None:
         """Get current token if valid.
         
         Returns:
@@ -195,9 +195,12 @@ class GraphClient:
                 drive_data = response.json()
                 self._drive_id_cache = drive_data.get("id")
                 
+                site_snip = (self._site_id_cache or "")[:20]
+                drive_snip = (self._drive_id_cache or "")[:20]
                 logger.info(
-                    f"Initialized Graph client - site_id={self._site_id_cache[:20]}..., "
-                    f"drive_id={self._drive_id_cache[:20] if self._drive_id_cache else 'N/A'}..."
+                    "Initialized Graph client - site_id=%s..., drive_id=%s...",
+                    site_snip,
+                    drive_snip,
                 )
         except Exception as exc:
             logger.warning(f"Could not initialize site/drive info: {exc}")
@@ -297,22 +300,28 @@ class GraphClient:
                 
                 # Check if this is a "Shared Documents" path issue
                 if "Shared%20Documents" in url or "Shared Documents" in endpoint:
-                    logger.info("Detected 'Shared Documents' in path, attempting retry with normalized path")
-                    
+                    logger.info("Detected 'Shared Documents' path; retrying")
+
                     # Try to fix the path by removing "Shared Documents"
-                    fixed_endpoint = endpoint.replace("/Shared Documents", "").replace("/Shared%20Documents", "")
-                    fixed_endpoint = fixed_endpoint.replace("Shared Documents/", "").replace("Shared%20Documents/", "")
-                    
+                    fixed_endpoint = endpoint.replace("/Shared Documents", "")
+                    fixed_endpoint = fixed_endpoint.replace("/Shared%20Documents", "")
+                    fixed_endpoint = fixed_endpoint.replace("Shared Documents/", "")
+                    fixed_endpoint = fixed_endpoint.replace("Shared%20Documents/", "")
+
                     if fixed_endpoint != endpoint:
-                        logger.info(f"Retrying with fixed endpoint: {fixed_endpoint}")
+                        logger.info("Retrying with fixed endpoint: %s", fixed_endpoint)
                         fixed_url = f"{self.base_url}/{fixed_endpoint.lstrip('/')}"
                         try:
-                            response = self.session.get(fixed_url, params=params, timeout=self.timeout)
+                            response = self.session.get(
+                                fixed_url,
+                                params=params,
+                                timeout=self.timeout,
+                            )
                             response.raise_for_status()
-                            logger.info("✓ Retry successful with normalized path")
+                            logger.info("Retry successful with normalized path")
                             return response.json()
                         except Exception as retry_exc:
-                            logger.error(f"Retry also failed: {retry_exc}")
+                            logger.error("Retry also failed: %s", retry_exc)
                 
                 # Log response details for debugging
                 logger.error(f"Response: {exc.response.text}")

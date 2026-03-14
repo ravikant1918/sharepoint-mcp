@@ -56,10 +56,20 @@ def upload_document(
     
     if client.api_type in ("graph", "graphql"):
         from . import document_service_graph
-        return document_service_graph.upload_document(folder_name, file_name, content, is_base64)
+        return document_service_graph.upload_document(
+            folder_name,
+            file_name,
+            content,
+            is_base64,
+        )
     else:
         from . import document_service_office365
-        return document_service_office365.upload_document(folder_name, file_name, content, is_base64)
+        return document_service_office365.upload_document(
+            folder_name,
+            file_name,
+            content,
+            is_base64,
+        )
 
 
 def upload_from_path(
@@ -72,7 +82,11 @@ def upload_from_path(
     
     if client.api_type in ("graph", "graphql"):
         from . import document_service_graph
-        return document_service_graph.upload_from_path(folder_name, file_path, new_name)
+        return document_service_graph.upload_from_path(
+            folder_name,
+            file_path,
+            new_name,
+        )
     else:
         from . import document_service_office365
         return document_service_office365.upload_from_path(folder_name, file_path, new_name)
@@ -89,10 +103,20 @@ def update_document(
     
     if client.api_type in ("graph", "graphql"):
         from . import document_service_graph
-        return document_service_graph.update_document(folder_name, file_name, content, is_base64)
+        return document_service_graph.update_document(
+            folder_name,
+            file_name,
+            content,
+            is_base64,
+        )
     else:
         from . import document_service_office365
-        return document_service_office365.update_document(folder_name, file_name, content, is_base64)
+        return document_service_office365.update_document(
+            folder_name,
+            file_name,
+            content,
+            is_base64,
+        )
 
 
 def delete_document(folder_name: str, file_name: str) -> dict[str, Any]:
@@ -120,4 +144,8 @@ def download_document(
         return document_service_graph.download_document(folder_name, file_name, local_path)
     else:
         from . import document_service_office365
-        return document_service_office365.download_document(folder_name, file_name, local_path)
+        return document_service_office365.download_document(
+            folder_name,
+            file_name,
+            local_path,
+        )

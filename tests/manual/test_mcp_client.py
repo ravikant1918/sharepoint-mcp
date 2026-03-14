@@ -1,8 +1,10 @@
 """Test MCP server with proper MCP client."""
 import asyncio
 import json
+
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
 
 async def test_list_tools():
     """Test listing all tools from the MCP server."""
@@ -80,7 +82,7 @@ async def main():
         print("\n\n" + "=" * 70)
         print("🔌 Testing MCP Protocol (stdio mode)")
         print("=" * 70)
-        tools = await test_list_tools()
+        await test_list_tools()
         
         print("\n" + "=" * 70)
         print("✅ ALL TESTS PASSED!")

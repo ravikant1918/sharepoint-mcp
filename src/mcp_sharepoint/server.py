@@ -11,6 +11,7 @@ import asyncio
 import logging as _logging
 import os
 from importlib.metadata import PackageNotFoundError, version
+from typing import Any
 
 import structlog
 from dotenv import load_dotenv
@@ -153,7 +154,8 @@ async def main() -> None:
     from .config import get_settings  # noqa: PLC0415
     settings = get_settings()
     if settings.shp_doc_library:
-        logger.info("config loaded — scoped to subfolder", library_name=settings.shp_library_name, scope=settings.shp_doc_library)
+        logger.info("config loaded — scoped to subfolder", library_name=settings.shp_library_name)
+        logger.info("scoped to subfolder", scope=settings.shp_doc_library)
     else:
         logger.info("config loaded — full library access", library_name=settings.shp_library_name)
 

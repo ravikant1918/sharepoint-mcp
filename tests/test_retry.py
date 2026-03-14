@@ -1,8 +1,6 @@
 """Tests for the retry decorator in utils/retry.py."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 import pytest
 
 from mcp_sharepoint.utils.retry import SharePointThrottleError, sp_retry

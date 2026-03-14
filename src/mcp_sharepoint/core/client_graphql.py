@@ -5,16 +5,12 @@ Provides a true GraphQL client for SharePoint operations.
 from __future__ import annotations
 
 import logging
-from functools import lru_cache
 from typing import Any
 from urllib.parse import urlparse
 
 import msal
-from gql import Client, gql
-from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.requests import RequestsHTTPTransport
 
-from ..config import get_settings
 from ..exceptions import SharePointConnectionError
 
 logger = logging.getLogger(__name__)
@@ -100,23 +96,29 @@ class GraphQLClient:
             logger.debug(f"Drive API response status: {response.status_code}")
             
             if response.status_code == 404:
-                logger.warning(f"⚠️ No default drive found (404). Attempting to list all drives...")
-                
+                logger.warning("No default drive found (404); listing all drives")
+
                 # Try to get list of all drives
                 drives_url = f"{self.graphql_endpoint}/sites/{self._site_id_cache}/drives"
                 drives_response = requests.get(drives_url, headers=headers, timeout=30)
                 drives_response.raise_for_status()
                 drives_data = drives_response.json()
-                
+
                 drives = drives_data.get("value", [])
-                logger.info(f"Found {len(drives)} drive(s) on this site:")
+                logger.info("Found %d drive(s) on this site:", len(drives))
                 for drive in drives:
-                    logger.info(f"  - {drive.get('name')} (Type: {drive.get('driveType')}, ID: {drive.get('id')[:20]}...)")
-                
+                    name = drive.get("name")
+                    d_type = drive.get("driveType")
+                    d_id = (drive.get("id") or "")[:20]
+                    logger.info("  - %s (Type: %s, ID: %s...)", name, d_type, d_id)
+
                 if drives:
                     # Use first available drive
-                    self._drive_id_cache = drives[0].get("id")
-                    logger.info(f"✓ Using drive: {drives[0].get('name')} (ID: {self._drive_id_cache[:20]}...)")
+                    drive0 = drives[0]
+                    self._drive_id_cache = drive0.get("id")
+                    drive_name = drive0.get("name")
+                    drive_id_snip = (self._drive_id_cache or "")[:20]
+                    logger.info("Using drive: %s (ID: %s...)", drive_name, drive_id_snip)
                 else:
                     raise ValueError("No drives found on this SharePoint site")
             else:
@@ -124,12 +126,13 @@ class GraphQLClient:
                 drive_data = response.json()
                 self._drive_id_cache = drive_data.get("id")
                 drive_name = drive_data.get("name", "Unknown")
-                logger.info(f"✓ Default drive retrieved: {drive_name} (ID: {self._drive_id_cache[:20]}...)")
+                drive_id_snip = (self._drive_id_cache or "")[:20]
+                logger.info("Default drive retrieved: %s (ID: %s...)", drive_name, drive_id_snip)
             
             if not self._drive_id_cache:
                 raise ValueError("Drive ID not found")
             
-            logger.info(f"🎉 GraphQL client initialized successfully")
+            logger.info("GraphQL client initialized successfully")
             
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ HTTP error during site initialization: {e}")
@@ -276,22 +279,29 @@ class GraphQLClient:
                 
                 # Check if this is a "Shared Documents" path issue
                 if "Shared%20Documents" in url or "Shared Documents" in endpoint:
-                    logger.info("Detected 'Shared Documents' in path, attempting retry with normalized path")
-                    
+                    logger.info("Detected 'Shared Documents' path; retrying")
+
                     # Try to fix the path by removing "Shared Documents"
-                    fixed_endpoint = endpoint.replace("/Shared Documents", "").replace("/Shared%20Documents", "")
-                    fixed_endpoint = fixed_endpoint.replace("Shared Documents/", "").replace("Shared%20Documents/", "")
-                    
+                    fixed_endpoint = endpoint.replace("/Shared Documents", "")
+                    fixed_endpoint = fixed_endpoint.replace("/Shared%20Documents", "")
+                    fixed_endpoint = fixed_endpoint.replace("Shared Documents/", "")
+                    fixed_endpoint = fixed_endpoint.replace("Shared%20Documents/", "")
+
                     if fixed_endpoint != endpoint:
-                        logger.info(f"Retrying with fixed endpoint: {fixed_endpoint}")
+                        logger.info("Retrying with fixed endpoint: %s", fixed_endpoint)
                         fixed_url = f"{self.graphql_endpoint}/{fixed_endpoint.lstrip('/')}"
                         try:
-                            response = requests.get(fixed_url, headers=headers, params=params, timeout=30)
+                            response = requests.get(
+                                fixed_url,
+                                headers=headers,
+                                params=params,
+                                timeout=30,
+                            )
                             response.raise_for_status()
-                            logger.info("✓ Retry successful with normalized path")
+                            logger.info("Retry successful with normalized path")
                             return response.json()
                         except Exception as retry_exc:
-                            logger.error(f"Retry also failed: {retry_exc}")
+                            logger.error("Retry also failed: %s", retry_exc)
                 
                 # Log response details for debugging
                 logger.error(f"Response: {exc.response.text}")

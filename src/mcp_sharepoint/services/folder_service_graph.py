@@ -9,8 +9,8 @@ from urllib.parse import quote
 
 from ..config import get_settings
 from ..core import get_sp_context
-from ..utils.retry import sp_retry
 from ..exceptions import SharePointConnectionError
+from ..utils.retry import sp_retry
 
 logger = logging.getLogger(__name__)
 
