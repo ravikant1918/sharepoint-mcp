@@ -21,7 +21,7 @@ WORKDIR /home/mcp/app
 COPY --chown=mcp:mcp pyproject.toml ./
 COPY --chown=mcp:mcp src/ ./src/
 
-ARG SETUPTOOLS_SCM_PRETEND_VERSION
+ARG SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0+local
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION}
 
 RUN pip install --no-cache-dir --user -e .

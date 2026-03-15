@@ -14,6 +14,7 @@ def mock_settings(monkeypatch):
     """Provide a dummy Settings object so tests never need real credentials."""
     dummy = MagicMock(spec=mcp_sharepoint.config.settings.Settings)
     dummy.shp_doc_library = "Shared Documents/mcp_server"
+    dummy.shp_library_name = "Shared Documents"
     dummy.shp_max_depth = 3
     dummy.shp_max_folders_per_level = 10
     dummy.shp_level_delay = 0.0

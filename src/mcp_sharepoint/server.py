@@ -11,6 +11,7 @@ import asyncio
 import logging as _logging
 import os
 from importlib.metadata import PackageNotFoundError, version
+from typing import Any
 
 import structlog
 from dotenv import load_dotenv
@@ -81,8 +82,28 @@ mcp = FastMCP(
 # Health check endpoint — used by Docker, load balancers, and monitoring
 # ---------------------------------------------------------------------------
 @mcp.custom_route("/health", methods=["GET"])
-async def health_check(request):  # noqa: ARG001
-    """Return server health status as JSON, including live SharePoint access validation."""
+async def health_check(request: Any) -> Any:  # noqa: ARG001
+    """Return server health status as JSON, including live SharePoint access validation.
+    
+    This endpoint validates live SharePoint connectivity and returns
+    operational metrics suitable for load balancer health checks.
+    
+    Args:
+        request: Starlette request object (unused, required by route signature)
+    
+    Returns:
+        JSONResponse with fields:
+            - status: "ok" | "degraded"
+            - version: Package version string
+            - transport: Active transport mode
+            - tools: Number of registered tools
+            - sharepoint: "connected" | "disconnected" | "unknown"
+            - sharepoint_error (optional): Error details if connection failed
+    
+    Status Codes:
+        200: SharePoint connectivity verified
+        503: SharePoint connection failed (service degraded)
+    """
     from starlette.responses import JSONResponse
     
     sp_status = "unknown"
@@ -91,9 +112,16 @@ async def health_check(request):  # noqa: ARG001
     try:
         def _verify_sp() -> None:
             from .core import get_sp_context
-            ctx = get_sp_context()
-            ctx.load(ctx.web)
-            ctx.execute_query()
+            client = get_sp_context()
+            
+            # Test connection based on API type
+            if client.api_type in ("graph", "graphql"):
+                # For Graph/GraphQL API, try to get site ID
+                client._get_site_id()
+            else:
+                # For Office365 API, use traditional load/execute
+                client.ctx.load(client.ctx.web)
+                client.ctx.execute_query()
             
         await asyncio.to_thread(_verify_sp)
         sp_status = "connected"
@@ -125,7 +153,11 @@ async def main() -> None:
     # Eagerly validate config — fail fast before any tool is called
     from .config import get_settings  # noqa: PLC0415
     settings = get_settings()
-    logger.info("config loaded", doc_library=settings.shp_doc_library)
+    if settings.shp_doc_library:
+        logger.info("config loaded — scoped to subfolder", library_name=settings.shp_library_name)
+        logger.info("scoped to subfolder", scope=settings.shp_doc_library)
+    else:
+        logger.info("config loaded — full library access", library_name=settings.shp_library_name)
 
     # Register all tools (side-effect of importing the tool modules)
     from .tools import document_tools, folder_tools, metadata_tools  # noqa: F401, PLC0415
